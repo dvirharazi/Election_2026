@@ -17,7 +17,7 @@
 
     <!-- Header -->
     <header class="bg-red-600 text-white shadow-md sticky top-0 z-50">
-        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between items-center gap-2">
             <div class="flex items-center gap-3">
                 <span class="bg-white text-red-600 font-black text-xl px-2.5 py-1 rounded-lg shadow">26</span>
                 <div>
@@ -25,7 +25,7 @@
                     <p class="text-xs text-red-100">משחק החיזויים והימורים חברתי</p>
                 </div>
             </div>
-            <div id="user-info" class="flex items-center gap-2 bg-red-700/60 px-3 py-1.5 rounded-full text-sm">
+            <div id="user-info" class="flex items-center gap-2 bg-red-700/80 px-3 py-1.5 rounded-full text-sm">
                 <span id="display-username" class="font-bold"></span>
                 <button onclick="changeUser()" class="text-xs bg-white/20 hover:bg-white/30 px-2 py-1 rounded transition">החלף משתמש</button>
             </div>
@@ -264,21 +264,21 @@
         }
 
         const partiesData = [
-            { id: 'likud', name: 'הליכוד', leader: 'בנימין נתניהו', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Benjamin_Netanyahu_2023_%28cropped%29.jpg/220px-Benjamin_Netanyahu_2023_%28cropped%29.jpg', color: 'bg-blue-600' },
-            { id: 'yeshar', name: 'ישר!', leader: 'גדי איזנקוט', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Gadi_Eisenkot_2022_%28cropped%29.jpg/220px-Gadi_Eisenkot_2022_%28cropped%29.jpg', color: 'bg-cyan-600' },
-            { id: 'beyachad', name: 'ביחד (יש עתיד ובנט)', leader: 'נפתלי בנט ויאיר לפיד', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Naftali_Bennett_official_photo_%28cropped%29.jpg/220px-Naftali_Bennett_official_photo_%28cropped%29.jpg', color: 'bg-indigo-600' },
-            { id: 'democrats', name: 'הדמוקרטים', leader: 'יאיר גולן', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Yair_Golan_2019.jpg/220px-Yair_Golan_2019.jpg', color: 'bg-red-500' },
-            { id: 'shas', name: "ש\"ס", leader: 'אריה דרעי', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Aryeh_Deri_2023.jpg/220px-Aryeh_Deri_2023.jpg', color: 'bg-amber-600' },
-            { id: 'otzma', name: 'עוצמה יהודית', leader: 'איתמר בן גביר', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Itamar_Ben-Gvir_2022_%28cropped%29.jpg/220px-Itamar_Ben-Gvir_2022_%28cropped%29.jpg', color: 'bg-yellow-600' },
-            { id: 'israel_beiteinu', name: 'ישראל ביתנו', leader: 'אביגדור ליברמן', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Avigdor_Lieberman_2023.jpg/220px-Avigdor_Lieberman_2023.jpg', color: 'bg-slate-700' },
-            { id: 'yahadut_hatorah', name: 'יהדות התורה', leader: 'אגודת ישראל - דגל התורה', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Moshe_Gafni_2015.jpg/220px-Moshe_Gafni_2015.jpg', color: 'bg-sky-700' },
-            { id: 'religious_zionism', name: 'הציונות הדתית - זהות', leader: 'בצלאל סמוטריץ\'', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Bezalel_Smotrich_2023_%28cropped%29.jpg/220px-Bezalel_Smotrich_2023_%28cropped%29.jpg', color: 'bg-blue-800' },
-            { id: 'noam', name: 'נעם', leader: 'אבי מעוז', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Avi_Maoz_Knesset_2022.jpg/220px-Avi_Maoz_Knesset_2022.jpg', color: 'bg-emerald-700' },
-            { id: 'miluimnikim', name: 'המילואימניקים', leader: 'תנועת המילואימניקים', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Soldier_icon.svg/200px-Soldier_icon.svg.png', color: 'bg-stone-700' },
-            { id: 'am_yisrael', name: 'עמך ישראל', leader: 'תנועה חברתית', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Soldier_icon.svg/200px-Soldier_icon.svg.png', color: 'bg-teal-600' },
-            { id: 'raam', name: 'רע"מ', leader: 'מנסור עבאס', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Mansour_Abbas_2021.jpg/220px-Mansour_Abbas_2021.jpg', color: 'bg-emerald-600' },
-            { id: 'hadash_taal', name: 'חד"ש-תע"ל', leader: 'איימן עודה', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Ayman_Odeh_2019.jpg/220px-Ayman_Odeh_2019.jpg', color: 'bg-red-700' },
-            { id: 'balad', name: 'בל"ד', leader: 'סמי אבו שחאדה', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Sami_Abu_Shehadeh_2020.jpg/220px-Sami_Abu_Shehadeh_2020.jpg', color: 'bg-purple-700' }
+            { id: 'likud', name: 'הליכוד', leader: 'בנימין נתניהו', symbol: 'מ', color: 'bg-blue-600', badgeColor: 'bg-blue-100 text-blue-700' },
+            { id: 'yeshar', name: 'ישר!', leader: 'גדי איזנקוט', symbol: 'יש', color: 'bg-cyan-600', badgeColor: 'bg-cyan-100 text-cyan-700' },
+            { id: 'beyachad', name: 'ביחד (יש עתיד ובנט)', leader: 'נפתלי בנט ויאיר לפיד', symbol: 'ב', color: 'bg-indigo-600', badgeColor: 'bg-indigo-100 text-indigo-700' },
+            { id: 'democrats', name: 'הדמוקרטים', leader: 'יאיר גולן', symbol: 'אה', color: 'bg-red-500', badgeColor: 'bg-red-100 text-red-700' },
+            { id: 'shas', name: "ש\"ס", leader: 'אריה דרעי', symbol: 'שס', color: 'bg-amber-600', badgeColor: 'bg-amber-100 text-amber-700' },
+            { id: 'otzma', name: 'עוצמה יהודית', leader: 'איתמר בן גביר', symbol: 'ט', color: 'bg-yellow-600', badgeColor: 'bg-yellow-100 text-yellow-700' },
+            { id: 'israel_beiteinu', name: 'ישראל ביתנו', leader: 'אביגדור ליברמן', symbol: 'ל', color: 'bg-slate-700', badgeColor: 'bg-slate-100 text-slate-700' },
+            { id: 'yahadut_hatorah', name: 'יהדות התורה', leader: 'אגודת ישראל - דגל התורה', symbol: 'ג', color: 'bg-sky-700', badgeColor: 'bg-sky-100 text-sky-700' },
+            { id: 'religious_zionism', name: 'הציונות הדתית - זהות', leader: 'בצלאל סמוטריץ\'', symbol: 'טז', color: 'bg-blue-800', badgeColor: 'bg-blue-100 text-blue-800' },
+            { id: 'noam', name: 'נעם', leader: 'אבי מעוז', symbol: 'נ', color: 'bg-emerald-700', badgeColor: 'bg-emerald-100 text-emerald-700' },
+            { id: 'miluimnikim', name: 'המילואימניקים', leader: 'תנועת המילואימניקים', symbol: 'מיל', color: 'bg-stone-700', badgeColor: 'bg-stone-100 text-stone-700' },
+            { id: 'am_yisrael', name: 'עמך ישראל', leader: 'תנועה חברתית', symbol: 'עם', color: 'bg-teal-600', badgeColor: 'bg-teal-100 text-teal-700' },
+            { id: 'raam', name: 'רע"מ', leader: 'מנסור עבאס', symbol: 'עם', color: 'bg-emerald-600', badgeColor: 'bg-emerald-100 text-emerald-600' },
+            { id: 'hadash_taal', name: 'חד"ש-תע"ל', leader: 'איימן עודה', symbol: 'ו', color: 'bg-red-700', badgeColor: 'bg-red-100 text-red-800' },
+            { id: 'balad', name: 'בל"ד', leader: 'סמי אבו שחאדה', symbol: 'ד', color: 'bg-purple-700', badgeColor: 'bg-purple-100 text-purple-700' }
         ];
 
         let currentUser = localStorage.getItem('election_username') || null;
@@ -375,7 +375,7 @@
                     container.innerHTML += `
                         <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 gap-2">
                             <div class="flex items-center gap-3">
-                                <img src="${p.img}" class="w-10 h-10 rounded-full object-cover border border-gray-300 shadow-sm" alt="${p.name}">
+                                <div class="w-10 h-10 rounded-xl ${p.badgeColor} font-black flex items-center justify-center text-sm shadow-sm">${p.symbol}</div>
                                 <div>
                                     <span class="font-bold text-sm block">${p.name}</span>
                                     <span class="text-xs text-gray-400">${p.leader}</span>
@@ -392,8 +392,8 @@
 
                 if(coalitionContainer) {
                     coalitionContainer.innerHTML += `
-                        <div id="coalition-card-${p.id}" onclick="toggleCoalition('${p.id}')" class="p-3 border border-gray-200 rounded-xl cursor-pointer text-center transition bg-white hover:border-red-500 flex flex-col items-center gap-1">
-                            <img src="${p.img}" class="w-8 h-8 rounded-full object-cover border" alt="${p.name}">
+                        <div id="coalition-card-${p.id}" onclick="toggleCoalition('${p.id}')" class="p-3 border border-gray-200 rounded-xl cursor-pointer text-center transition bg-white hover:border-red-500 flex flex-col items-center gap-1.5">
+                            <div class="w-8 h-8 rounded-lg ${p.badgeColor} font-bold flex items-center justify-center text-xs">${p.symbol}</div>
                             <span class="font-bold text-xs block">${p.name}</span>
                         </div>
                     `;
@@ -403,7 +403,7 @@
                     adminContainer.innerHTML += `
                         <div class="flex justify-between items-center bg-gray-50 p-2 rounded-lg text-sm">
                             <div class="flex items-center gap-2">
-                                <img src="${p.img}" class="w-6 h-6 rounded-full object-cover">
+                                <div class="w-6 h-6 rounded-md ${p.badgeColor} font-bold flex items-center justify-center text-xs">${p.symbol}</div>
                                 <span>${p.name}</span>
                             </div>
                             <input type="number" id="admin-actual-${p.id}" value="0" oninput="calcAdminActualTotal()" class="w-16 p-1 text-center border rounded-lg font-bold">
@@ -523,9 +523,9 @@
                 let card = document.getElementById(`coalition-card-${p.id}`);
                 if(card) {
                     if (userCoalition.includes(p.id)) {
-                        card.className = "p-3 border-2 border-red-600 bg-red-50 rounded-xl cursor-pointer text-center transition shadow-sm flex flex-col items-center gap-1";
+                        card.className = "p-3 border-2 border-red-600 bg-red-50 rounded-xl cursor-pointer text-center transition shadow-sm flex flex-col items-center gap-1.5";
                     } else {
-                        card.className = "p-3 border border-gray-200 bg-white rounded-xl cursor-pointer text-center transition hover:border-red-300 flex flex-col items-center gap-1";
+                        card.className = "p-3 border border-gray-200 bg-white rounded-xl cursor-pointer text-center transition hover:border-red-300 flex flex-col items-center gap-1.5";
                     }
                 }
             });
@@ -703,7 +703,7 @@
                     <div class="space-y-1">
                         <div class="flex justify-between items-center text-sm font-bold">
                             <div class="flex items-center gap-2">
-                                <img src="${p.img}" class="w-7 h-7 rounded-full object-cover border">
+                                <div class="w-6 h-6 rounded-md ${p.badgeColor} font-bold flex items-center justify-center text-xs">${p.symbol}</div>
                                 <span>${p.name}</span>
                             </div>
                             <span>${mandates} מנדטים בממוצע</span>
@@ -832,7 +832,7 @@
                             <div>
                                 <button onclick="activeLeagueViewId = null; renderLeaguesUI();" class="text-xs text-blue-600 hover:underline mb-2 block">← חזרה לכל הליגות שלי</button>
                                 <h2 class="font-black text-2xl text-gray-900">${l.name}</h2>
-                                <div class="flex items-center mt-1">
+                                <div class="flex items-center mt-1 flex-wrap gap-2">
                                     <p class="text-sm text-red-600 font-bold">🎁 פרס / התערבות: ${l.prize}</p>
                                     ${prizeEditBtn}
                                 </div>
@@ -959,7 +959,7 @@
                         html += `
                             <div class="flex justify-between items-center bg-white p-2 rounded-lg border text-xs">
                                 <div class="flex items-center gap-2">
-                                    <img src="${p.img}" class="w-6 h-6 rounded-full object-cover">
+                                    <div class="w-6 h-6 rounded-md ${p.badgeColor} font-bold flex items-center justify-center text-xs">${p.symbol}</div>
                                     <span class="font-bold">${p.name}</span>
                                 </div>
                                 <span class="font-black text-blue-600">${mandates} מנדטים</span>
