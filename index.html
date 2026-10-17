@@ -70,7 +70,7 @@
                     </h2>
                     <button onclick="resetMandates()" class="text-xs text-red-600 hover:underline">איפוס טופס</button>
                 </div>
-                <p class="text-xs text-gray-500">מפלגה שעוברת חייבת לקבל לפחות 4 מנדטים (או 0 אם אינה עוברת).</p>
+                <p class="text-xs text-gray-500">הקלד חופשי את מספר המנדטים (מפלגה שעוברת מקבלת לפחות 4 מנדטים, או 0 אם אינה עוברת).</p>
                 
                 <div id="parties-list" class="space-y-3">
                     <!-- Dynamic Parties Loaded Here -->
@@ -323,7 +323,7 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <button onclick="updateMandate('${p.id}', -1)" class="w-8 h-8 bg-white border rounded-lg font-bold text-gray-600 shadow-sm">-</button>
-                            <input type="number" id="mandate-${p.id}" value="0" min="0" max="120" oninput="calcTotalMandates()" onchange="validateMandateInput('${p.id}')" class="w-14 text-center font-bold p-1.5 bg-white border rounded-lg text-sm">
+                            <input type="number" id="mandate-${p.id}" value="0" min="0" max="120" oninput="calcTotalMandates()" class="w-14 text-center font-bold p-1.5 bg-white border rounded-lg text-sm">
                             <button onclick="updateMandate('${p.id}', 1)" class="w-8 h-8 bg-white border rounded-lg font-bold text-gray-600 shadow-sm">+</button>
                         </div>
                     </div>
@@ -348,22 +348,8 @@
             let input = document.getElementById(`mandate-${partyId}`);
             let val = parseInt(input.value) || 0;
             let newVal = val + change;
-
-            if (newVal > 0 && newVal < 4) {
-                newVal = change > 0 ? 4 : 0;
-            }
             if (newVal < 0) newVal = 0;
-
             input.value = newVal;
-            calcTotalMandates();
-        }
-
-        function validateMandateInput(partyId) {
-            let input = document.getElementById(`mandate-${partyId}`);
-            let val = parseInt(input.value) || 0;
-            if (val > 0 && val < 4) {
-                input.value = 4;
-            }
             calcTotalMandates();
         }
 
@@ -376,7 +362,6 @@
             });
 
             let counterBox = document.getElementById('mandate-counter-box');
-            document.getElementById('total-mandates').innerText = total;
 
             if (total > 120) {
                 counterBox.className = "px-4 py-2 rounded-xl font-black text-lg bg-red-100 text-red-700 border border-red-300 transition animate-pulse";
