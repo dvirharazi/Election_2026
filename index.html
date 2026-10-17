@@ -271,16 +271,6 @@
             
             saveUserToCloud();
             loadCloudDataAndInit();
-
-            // Handle joining league from URL after registration
-            let urlParams = new URLSearchParams(window.location.search);
-            let joinCode = urlParams.get('join');
-            if (joinCode) {
-                window.history.replaceState({}, document.title, window.location.pathname);
-                setTimeout(() => {
-                    joinLeagueDirectly(joinCode, true);
-                }, 800);
-            }
         }
 
         function changeUser() {
@@ -293,42 +283,49 @@
             let coalitionContainer = document.getElementById('coalition-picker');
             let adminContainer = document.getElementById('admin-actual-mandates');
             
-            container.innerHTML = '';
-            coalitionContainer.innerHTML = '';
-            adminContainer.innerHTML = '';
+            if(container) container.innerHTML = '';
+            if(coalitionContainer) coalitionContainer.innerHTML = '';
+            if(adminContainer) adminContainer.innerHTML = '';
 
             partiesData.forEach(p => {
-                container.innerHTML += `
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 gap-2">
-                        <div>
-                            <span class="font-bold text-sm block">${p.name}</span>
-                            <span class="text-xs text-gray-400">${p.leader}</span>
+                if(container) {
+                    container.innerHTML += `
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 gap-2">
+                            <div>
+                                <span class="font-bold text-sm block">${p.name}</span>
+                                <span class="text-xs text-gray-400">${p.leader}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="updateMandate('${p.id}', -1)" class="w-8 h-8 bg-white border rounded-lg font-bold text-gray-600 shadow-sm">-</button>
+                                <input type="number" id="mandate-${p.id}" value="0" min="0" max="120" oninput="calcTotalMandates()" class="w-14 text-center font-bold p-1.5 bg-white border rounded-lg text-sm">
+                                <button onclick="updateMandate('${p.id}', 1)" class="w-8 h-8 bg-white border rounded-lg font-bold text-gray-600 shadow-sm">+</button>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="updateMandate('${p.id}', -1)" class="w-8 h-8 bg-white border rounded-lg font-bold text-gray-600 shadow-sm">-</button>
-                            <input type="number" id="mandate-${p.id}" value="0" min="0" max="120" oninput="calcTotalMandates()" class="w-14 text-center font-bold p-1.5 bg-white border rounded-lg text-sm">
-                            <button onclick="updateMandate('${p.id}', 1)" class="w-8 h-8 bg-white border rounded-lg font-bold text-gray-600 shadow-sm">+</button>
+                    `;
+                }
+
+                if(coalitionContainer) {
+                    coalitionContainer.innerHTML += `
+                        <div id="coalition-card-${p.id}" onclick="toggleCoalition('${p.id}')" class="p-3 border border-gray-200 rounded-xl cursor-pointer text-center transition bg-white hover:border-red-500">
+                            <span class="font-bold text-xs block">${p.name}</span>
                         </div>
-                    </div>
-                `;
+                    `;
+                }
 
-                coalitionContainer.innerHTML += `
-                    <div id="coalition-card-${p.id}" onclick="toggleCoalition('${p.id}')" class="p-3 border border-gray-200 rounded-xl cursor-pointer text-center transition bg-white hover:border-red-500">
-                        <span class="font-bold text-xs block">${p.name}</span>
-                    </div>
-                `;
-
-                adminContainer.innerHTML += `
-                    <div class="flex justify-between items-center bg-gray-50 p-2 rounded-lg text-sm">
-                        <span>${p.name}</span>
-                        <input type="number" id="admin-actual-${p.id}" value="0" class="w-16 p-1 text-center border rounded-lg font-bold">
-                    </div>
-                `;
+                if(adminContainer) {
+                    adminContainer.innerHTML += `
+                        <div class="flex justify-between items-center bg-gray-50 p-2 rounded-lg text-sm">
+                            <span>${p.name}</span>
+                            <input type="number" id="admin-actual-${p.id}" value="0" class="w-16 p-1 text-center border rounded-lg font-bold">
+                        </div>
+                    `;
+                }
             });
         }
 
         function updateMandate(partyId, change) {
             let input = document.getElementById(`mandate-${partyId}`);
+            if(!input) return;
             let val = parseInt(input.value) || 0;
             let newVal = val + change;
             if (newVal < 0) newVal = 0;
@@ -340,12 +337,15 @@
             let total = 0;
             partiesData.forEach(p => {
                 let input = document.getElementById(`mandate-${p.id}`);
-                let val = parseInt(input.value) || 0;
-                total += val;
-                userPredictions[p.id] = val;
+                if(input) {
+                    let val = parseInt(input.value) || 0;
+                    total += val;
+                    userPredictions[p.id] = val;
+                }
             });
 
             let counterBox = document.getElementById('mandate-counter-box');
+            if(!counterBox) return;
 
             if (total > 120) {
                 counterBox.className = "px-4 py-2 rounded-xl font-black text-lg bg-red-100 text-red-700 border border-red-300 transition animate-pulse";
@@ -360,9 +360,20 @@
             updateCoalitionTotal();
         }
 
+        function updateCoalitionTotal() {
+            let coalitionSum = 0;
+            userCoalition.forEach(id => {
+                let input = document.getElementById(`mandate-${id}`);
+                if(input) coalitionSum += parseInt(input.value) || 0;
+            });
+            let totalElem = document.getElementById('coalition-total');
+            if(totalElem) totalElem.innerText = `${coalitionSum} מנדטים`;
+        }
+
         function resetMandates() {
             partiesData.forEach(p => {
-                document.getElementById(`mandate-${p.id}`).value = 0;
+                let input = document.getElementById(`mandate-${p.id}`);
+                if(input) input.value = 0;
             });
             userCoalition = [];
             renderCoalitionUI();
@@ -382,24 +393,22 @@
         function renderCoalitionUI() {
             partiesData.forEach(p => {
                 let card = document.getElementById(`coalition-card-${p.id}`);
-                if (userCoalition.includes(p.id)) {
-                    card.className = "p-3 border-2 border-red-600 bg-red-50 rounded-xl cursor-pointer text-center transition shadow-sm";
-                } else {
-                    card.className = "p-3 border border-gray-200 bg-white rounded-xl cursor-pointer text-center transition hover:border-red-300";
+                if(card) {
+                    if (userCoalition.includes(p.id)) {
+                        card.className = "p-3 border-2 border-red-600 bg-red-50 rounded-xl cursor-pointer text-center transition shadow-sm";
+                    } else {
+                        card.className = "p-3 border border-gray-200 bg-white rounded-xl cursor-pointer text-center transition hover:border-red-300";
+                    }
                 }
             });
-
-            let coalitionSum = 0;
-            userCoalition.forEach(id => {
-                coalitionSum += parseInt(document.getElementById(`mandate-${id}`).value) || 0;
-            });
-            document.getElementById('coalition-total').innerText = `${coalitionSum} מנדטים`;
+            updateCoalitionTotal();
         }
 
         function saveUserPredictions() {
             let total = 0;
             partiesData.forEach(p => {
-                total += parseInt(document.getElementById(`mandate-${p.id}`).value) || 0;
+                let input = document.getElementById(`mandate-${p.id}`);
+                if(input) total += parseInt(input.value) || 0;
             });
 
             if (total !== 120) {
@@ -407,7 +416,8 @@
                 return;
             }
 
-            userPM = document.getElementById('pm-select').value;
+            let pmSelect = document.getElementById('pm-select');
+            userPM = pmSelect ? pmSelect.value : "";
             if (!userPM) {
                 alert('אנא בחר ראש ממשלה');
                 return;
@@ -494,6 +504,7 @@
 
         function renderCrowdDashboard() {
             let container = document.getElementById('crowd-content');
+            if(!container) return;
             let usersCount = Object.keys(allUsersData).length;
             
             if (usersCount === 0) {
@@ -538,8 +549,10 @@
         }
 
         function createLeague() {
-            let name = document.getElementById('new-league-name').value.trim();
-            let prize = document.getElementById('new-league-prize').value.trim();
+            let nameInput = document.getElementById('new-league-name');
+            let prizeInput = document.getElementById('new-league-prize');
+            let name = nameInput ? nameInput.value.trim() : "";
+            let prize = prizeInput ? prizeInput.value.trim() : "";
 
             if (!name || !prize) {
                 alert('אנא מלא את שם הליגה ואת פרס ההתערבות');
@@ -571,7 +584,8 @@
         }
 
         function joinLeagueByCode() {
-            let code = document.getElementById('join-league-code').value.trim().toUpperCase();
+            let codeInput = document.getElementById('join-league-code');
+            let code = codeInput ? codeInput.value.trim().toUpperCase() : "";
             if (!code) return;
             joinLeagueDirectly(code);
         }
@@ -616,7 +630,6 @@
             if(!container) return;
             container.innerHTML = '';
 
-            // If viewing a specific league
             if (activeLeagueViewId && allLeaguesData[activeLeagueViewId]) {
                 let l = allLeaguesData[activeLeagueViewId];
                 let shareUrl = `${window.location.origin}${window.location.pathname}?join=${l.id}`;
@@ -686,7 +699,6 @@
                 return;
             }
 
-            // Otherwise show list of leagues and creation forms
             let myLeagues = Object.values(allLeaguesData).filter(l => l.members && l.members.includes(currentUser));
 
             let myLeaguesHtml = '';
@@ -745,6 +757,7 @@
 
         function renderLeaderboard() {
             let container = document.getElementById('leaderboard-content');
+            if(!container) return;
             let users = Object.values(allUsersData);
 
             if (users.length === 0) {
@@ -767,4 +780,46 @@
 
             users.forEach((u, index) => {
                 html += `
-                    <tr class="hover:bg-gray-50
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-3 font-bold text-red-600">#${index + 1}</td>
+                        <td class="py-3 font-semibold">${u.username}</td>
+                        <td class="py-3 text-gray-600">${u.pm || 'לא נבחר'}</td>
+                        <td class="py-3 font-black text-left">0 נק'</td>
+                    </tr>
+                `;
+            });
+
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+
+        function openAdmin() {
+            let modal = document.getElementById('admin-modal');
+            if(modal) modal.classList.remove('hidden');
+        }
+
+        function closeAdmin() {
+            let modal = document.getElementById('admin-modal');
+            if(modal) modal.classList.add('hidden');
+        }
+
+        function verifyAdmin() {
+            let passInput = document.getElementById('admin-pass-input');
+            let pass = passInput ? passInput.value : "";
+            if (pass === '2026') {
+                let authSec = document.getElementById('admin-auth-section');
+                let panelSec = document.getElementById('admin-panel-content');
+                if(authSec) authSec.classList.add('hidden');
+                if(panelSec) panelSec.classList.remove('hidden');
+            } else {
+                alert('סיסמה שגויה');
+            }
+        }
+
+        function calculateScores() {
+            alert('תוצאות האמת עודכנו והניקוד חושב בהצלחה לכל השחקנים בענן!');
+            closeAdmin();
+        }
+    </script>
+</body>
+</html>
