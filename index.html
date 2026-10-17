@@ -204,17 +204,19 @@
     <!-- FIREBASE & APP SCRIPT -->
     <script>
         const firebaseConfig = {
-            apiKey: "AIzaSyDummyKeyForDemoPurposesOnly12345",
-            authDomain: "election-2026-demo.firebaseapp.com",
-            projectId: "election-2026-demo",
-            storageBucket: "election-2026-demo.appspot.com",
-            messagingSenderId: "1234567890",
-            appId: "1:1234567890:web:abcdef123456"
+            apiKey: "AIzaSyCaIJBvM1KMlMGxWkWiNa7zCYqClDbjLDg",
+            authDomain: "election2026-4fbae.firebaseapp.com",
+            projectId: "election2026-4fbae",
+            storageBucket: "election2026-4fbae.firebasestorage.app",
+            messagingSenderId: "950547253435",
+            appId: "1:950547253435:web:ac57a46ea3198fd562419e",
+            measurementId: "G-Z2V8H2QL2P"
         };
         
+        let db = null;
         try {
             firebase.initializeApp(firebaseConfig);
-            var db = firebase.firestore();
+            db = firebase.firestore();
         } catch(e) {
             console.warn("Firebase offline mode", e);
         }
@@ -271,6 +273,15 @@
             
             saveUserToCloud();
             loadCloudDataAndInit();
+
+            let urlParams = new URLSearchParams(window.location.search);
+            let joinCode = urlParams.get('join');
+            if (joinCode) {
+                window.history.replaceState({}, document.title, window.location.pathname);
+                setTimeout(() => {
+                    joinLeagueDirectly(joinCode);
+                }, 800);
+            }
         }
 
         function changeUser() {
@@ -311,16 +322,9 @@
                         </div>
                     `;
                 }
-
-                if(adminContainer) {
-                    adminContainer.innerHTML += `
-                        <div class="flex justify-between items-center bg-gray-50 p-2 rounded-lg text-sm">
-                            <span>${p.name}</span>
-                            <input type="number" id="admin-actual-${p.id}" value="0" class="w-16 p-1 text-center border rounded-lg font-bold">
-                        </div>
-                    `;
-                }
             });
+            calcTotalMandates();
+            renderCoalitionUI();
         }
 
         function updateMandate(partyId, change) {
@@ -431,7 +435,7 @@
                 updatedAt: new Date().toISOString()
             };
 
-            if (typeof db !== 'undefined') {
+            if (db) {
                 db.collection('predictions').doc(currentUser).set(predictionData)
                 .then(() => {
                     alert('ההימורים נשמרו בהצלחה בענן! 🎯');
@@ -468,7 +472,7 @@
         }
 
         function loadCloudDataAndInit() {
-            if (typeof db === 'undefined') return;
+            if (!db) return;
             
             db.collection('predictions').onSnapshot(snapshot => {
                 allUsersData = {};
@@ -483,7 +487,6 @@
                 snapshot.forEach(doc => {
                     allLeaguesData[doc.id] = doc.data();
                 });
-                
                 checkUrlJoinParamAfterLoad();
             });
         }
@@ -498,8 +501,9 @@
         }
 
         function saveUserToCloud() {
-            if (typeof db === 'undefined') return;
-            db.collection('users').doc(currentUser).set({ username: currentUser, joinedAt: new Date().toISOString() });
+            if (db) {
+                db.collection('users').doc(currentUser).set({ username: currentUser, joinedAt: new Date().toISOString() }).catch(e=>{});
+            }
         }
 
         function renderCrowdDashboard() {
@@ -568,18 +572,13 @@
                 members: [currentUser]
             };
 
-            if (typeof db !== 'undefined') {
+            if (db) {
                 db.collection('leagues').doc(code).set(leagueData).then(() => {
                     alert(`הליגה נוצרה בהצלחה! קוד ההצטרפות הוא: ${code}`);
                     activeLeagueViewId = code;
                     switchTab('leagues');
                     renderLeaguesUI();
-                });
-            } else {
-                allLeaguesData[code] = leagueData;
-                activeLeagueViewId = code;
-                switchTab('leagues');
-                renderLeaguesUI();
+                }).catch(e => alert('שגיאה ביצירת ליגה בענן'));
             }
         }
 
@@ -591,38 +590,27 @@
         }
 
         function joinLeagueDirectly(code) {
-            if (typeof db !== 'undefined') {
-                db.collection('leagues').doc(code).get().then(doc => {
-                    if (!doc.exists) {
-                        alert('קוד הליגה אינו קיים במערכת');
-                        return;
-                    }
-                    let league = doc.data();
-                    if (!league.members.includes(currentUser)) {
-                        league.members.push(currentUser);
-                        db.collection('leagues').doc(code).update({ members: league.members }).then(() => {
-                            activeLeagueViewId = code;
-                            switchTab('leagues');
-                            renderLeaguesUI();
-                        });
-                    } else {
+            if (!db) return;
+
+            db.collection('leagues').doc(code).get().then(doc => {
+                if (!doc.exists) {
+                    alert('קוד הליגה אינו קיים במערכת');
+                    return;
+                }
+                let league = doc.data();
+                if (!league.members.includes(currentUser)) {
+                    league.members.push(currentUser);
+                    db.collection('leagues').doc(code).update({ members: league.members }).then(() => {
                         activeLeagueViewId = code;
                         switchTab('leagues');
                         renderLeaguesUI();
-                    }
-                });
-            } else {
-                if (allLeaguesData[code]) {
-                    if (!allLeaguesData[code].members.includes(currentUser)) {
-                        allLeaguesData[code].members.push(currentUser);
-                    }
+                    });
+                } else {
                     activeLeagueViewId = code;
                     switchTab('leagues');
                     renderLeaguesUI();
-                } else {
-                    alert('קוד הליגה אינו קיים');
                 }
-            }
+            });
         }
 
         function renderLeaguesUI() {
