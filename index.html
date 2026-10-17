@@ -738,6 +738,24 @@
             }
         }
 
+        function editLeaguePrize(leagueId) {
+            let l = allLeaguesData[leagueId];
+            if(!l) return;
+            let newPrize = prompt("הכנס את פרס ההתערבות החדש:", l.prize);
+            if(newPrize !== null) {
+                newPrize = newPrize.trim();
+                if(!newPrize) {
+                    alert("הפרס לא יכול להיות ריק");
+                    return;
+                }
+                if(db) {
+                    db.collection('leagues').doc(leagueId).update({ prize: newPrize }).then(() => {
+                        alert("פרס ההתערבות עודכן בהצלחה!");
+                    }).catch(e => alert("שגיאה בעדכון הפרס"));
+                }
+            }
+        }
+
         function joinLeagueByCode() {
             let codeInput = document.getElementById('join-league-code');
             let code = codeInput ? codeInput.value.trim().toUpperCase() : "";
@@ -779,6 +797,9 @@
                 let shareUrl = `${window.location.origin}${window.location.pathname}?join=${l.id}`;
                 let whatsappText = encodeURIComponent(`הצטרפו לליגת הבחירות שלי "${l.name}" ⚽\nעל מה מתערבים? ${l.prize}\n\n🔑 קוד הצטרפות לליגה: ${l.id}\nהצטרפו ישירות בלחיצה:\n${shareUrl}`);
 
+                let isLeagueAdmin = (l.admin === currentUser);
+                let prizeEditBtn = isLeagueAdmin ? `<button onclick="editLeaguePrize('${l.id}')" class="text-xs bg-red-100 text-red-600 hover:bg-red-200 px-2 py-1 rounded-lg font-bold transition mr-2">✏️ ערוך פרס</button>` : '';
+
                 let membersHtml = '';
                 l.members.forEach((m, idx) => {
                     let userPred = allUsersData[m];
@@ -801,7 +822,10 @@
                             <div>
                                 <button onclick="activeLeagueViewId = null; renderLeaguesUI();" class="text-xs text-blue-600 hover:underline mb-2 block">← חזרה לכל הליגות שלי</button>
                                 <h2 class="font-black text-2xl text-gray-900">${l.name}</h2>
-                                <p class="text-sm text-red-600 font-bold mt-1">🎁 פרס / התערבות: ${l.prize}</p>
+                                <div class="flex items-center mt-1">
+                                    <p class="text-sm text-red-600 font-bold">🎁 פרס / התערבות: ${l.prize}</p>
+                                    ${prizeEditBtn}
+                                </div>
                             </div>
                             <span class="bg-blue-100 text-blue-700 font-mono text-sm font-bold px-3 py-1.5 rounded-xl">קוד: ${l.id}</span>
                         </div>
