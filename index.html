@@ -70,7 +70,7 @@
                     </h2>
                     <button onclick="resetMandates()" class="text-xs text-red-600 hover:underline">איפוס טופס</button>
                 </div>
-                <p class="text-xs text-gray-500">ניתן להיכנס ולעדכן את ההימור שלך בכל עת!</p>
+                <p class="text-xs text-gray-500">הנתונים הקודמים שלך נטענו אוטומטית. ניתן לעדכן ולשמור בכל עת!</p>
                 
                 <div id="parties-list" class="space-y-3">
                     <!-- Dynamic Parties Loaded Here -->
@@ -114,7 +114,7 @@
 
             <!-- Save Predictions Button -->
             <button onclick="saveUserPredictions()" class="w-full py-4 bg-red-600 hover:bg-red-700 text-white font-black rounded-2xl shadow-lg transition text-lg flex items-center justify-center gap-2">
-                <span>שמור הימורים ושלח לענן</span> 🚀
+                <span>שמור הימורים ועדכן בענן</span> 🚀
             </button>
         </section>
 
@@ -176,10 +176,18 @@
             <div id="admin-panel-content" class="hidden space-y-6">
                 <p class="text-xs text-green-600 font-bold">✔ מחובר כמנהל מערכת</p>
                 
-                <!-- Manage Leagues & Users -->
+                <!-- Manage Users -->
                 <div class="space-y-3 border-b pb-4">
-                    <h4 class="font-bold text-sm text-red-600">ניהול ליגות ומשתמשים:</h4>
-                    <div id="admin-leagues-list" class="space-y-2 max-h-40 overflow-y-auto">
+                    <h4 class="font-bold text-sm text-indigo-600">ניהול משתמשים רשומים:</h4>
+                    <div id="admin-users-list" class="space-y-2 max-h-36 overflow-y-auto">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+
+                <!-- Manage Leagues -->
+                <div class="space-y-3 border-b pb-4">
+                    <h4 class="font-bold text-sm text-red-600">ניהול ליגות פרטיות:</h4>
+                    <div id="admin-leagues-list" class="space-y-2 max-h-36 overflow-y-auto">
                         <!-- Populated via JS -->
                     </div>
                 </div>
@@ -201,7 +209,7 @@
         </div>
     </div>
 
-    <!-- ENTRY MODAL (Name Only) -->
+    <!-- ENTRY MODAL (Name & PIN) -->
     <div id="entry-modal" class="fixed inset-0 bg-red-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl max-w-md w-full p-8 space-y-6 shadow-2xl text-center">
             <div class="w-16 h-16 bg-red-100 text-red-600 rounded-2xl mx-auto flex items-center justify-center text-2xl font-black">26</div>
@@ -212,7 +220,13 @@
             <div class="space-y-3 text-right">
                 <label class="block text-sm font-semibold">איך קוראים לך?</label>
                 <input type="text" id="username-input" placeholder="הכנס את שמך המלא או כינוי..." class="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-red-500">
-                <p id="name-error" class="text-xs text-red-500 hidden">השם הזה כבר תפוס במערכת! נסה להוסיף כינוי או שם משפחה.</p>
+                
+                <div id="pin-container" class="space-y-1 pt-2">
+                    <label class="block text-sm font-semibold" id="pin-label">בחר קוד סודי (4 ספרות) להגנת החשבון:</label>
+                    <input type="password" maxlength="4" id="pin-input" placeholder="למשל: 1234" class="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-red-500 text-center tracking-widest text-lg">
+                </div>
+
+                <p id="name-error" class="text-xs text-red-500 hidden">שם משתמש תפוס או קוד אישי שגוי! בדוק את הפרטים.</p>
             </div>
             <button onclick="registerUser()" class="w-full py-4 bg-red-600 hover:bg-red-700 text-white font-black rounded-2xl shadow-lg transition text-base">כניסה למשחק</button>
         </div>
@@ -257,17 +271,19 @@
         ];
 
         let currentUser = localStorage.getItem('election_username') || null;
+        let currentPin = localStorage.getItem('election_pin') || null;
         let userPredictions = {};
         let userCoalition = [];
         let userPM = "";
         let allUsersData = {};
         let allLeaguesData = {};
+        let registeredUsersList = {};
         let activeLeagueViewId = null;
 
         window.addEventListener('DOMContentLoaded', () => {
             initPartiesUI();
             
-            if (!currentUser) {
+            if (!currentUser || !currentPin) {
                 document.getElementById('entry-modal').classList.remove('hidden');
             } else {
                 document.getElementById('entry-modal').classList.add('hidden');
@@ -278,17 +294,44 @@
 
         function registerUser() {
             let nameInput = document.getElementById('username-input').value.trim();
-            if (!nameInput) {
-                alert('אנא הכנס שם תקין');
+            let pinInput = document.getElementById('pin-input').value.trim();
+            let errorBox = document.getElementById('name-error');
+            
+            if (!nameInput || pinInput.length !== 4) {
+                alert('אנא הכנס שם מלא וקוד סודי תקין בן 4 ספרות');
                 return;
             }
-            
+
+            if (db) {
+                db.collection('users').doc(nameInput).get().then(doc => {
+                    if (doc.exists) {
+                        let data = doc.data();
+                        if (data.pin && data.pin !== pinInput) {
+                            errorBox.innerText = "השם הזה כבר תפוס על ידי משתמש אחר והקוד שגוי!";
+                            errorBox.classList.remove('hidden');
+                            return;
+                        }
+                    }
+                    proceedRegistration(nameInput, pinInput);
+                }).catch(() => {
+                    proceedRegistration(nameInput, pinInput);
+                });
+            } else {
+                proceedRegistration(nameInput, pinInput);
+            }
+        }
+
+        function proceedRegistration(nameInput, pinInput) {
+            document.getElementById('name-error').classList.add('hidden');
             currentUser = nameInput;
+            currentPin = pinInput;
             localStorage.setItem('election_username', currentUser);
+            localStorage.setItem('election_pin', currentPin);
+            
             document.getElementById('entry-modal').classList.add('hidden');
             document.getElementById('display-username').innerText = `שלום, ${currentUser}`;
             
-            saveUserToCloud();
+            saveUserToCloud(pinInput);
             loadCloudDataAndInit();
 
             let urlParams = new URLSearchParams(window.location.search);
@@ -303,6 +346,7 @@
 
         function changeUser() {
             localStorage.removeItem('election_username');
+            localStorage.removeItem('election_pin');
             location.reload();
         }
 
@@ -351,6 +395,29 @@
             });
             calcTotalMandates();
             renderCoalitionUI();
+        }
+
+        function loadUserExistingPredictions() {
+            if (allUsersData[currentUser]) {
+                let uData = allUsersData[currentUser];
+                if (uData.mandates) {
+                    userPredictions = uData.mandates;
+                    partiesData.forEach(p => {
+                        let input = document.getElementById(`mandate-${p.id}`);
+                        if(input) input.value = userPredictions[p.id] || 0;
+                    });
+                }
+                if (uData.coalition) {
+                    userCoalition = uData.coalition;
+                    renderCoalitionUI();
+                }
+                if (uData.pm) {
+                    userPM = uData.pm;
+                    let pmSelect = document.getElementById('pm-select');
+                    if(pmSelect) pmSelect.value = userPM;
+                }
+                calcTotalMandates();
+            }
         }
 
         function updateMandate(partyId, change) {
@@ -466,19 +533,21 @@
                 return;
             }
 
+            let existingScore = (allUsersData[currentUser] && allUsersData[currentUser].score !== undefined) ? allUsersData[currentUser].score : 0;
+
             let predictionData = {
                 username: currentUser,
                 mandates: userPredictions,
                 coalition: userCoalition,
                 pm: userPM,
-                score: 0,
+                score: existingScore,
                 updatedAt: new Date().toISOString()
             };
 
             if (db) {
                 db.collection('predictions').doc(currentUser).set(predictionData)
                 .then(() => {
-                    alert('ההימורים נשמרו בהצלחה בענן! (ניתן לעדכן בכל עת) 🎯');
+                    alert('ההימורים נשמרו בהצלחה! ניתן לעדכן בכל עת 🎯');
                     switchTab('crowd');
                 })
                 .catch(err => {
@@ -519,8 +588,16 @@
                 snapshot.forEach(doc => {
                     allUsersData[doc.id] = doc.data();
                 });
+                loadUserExistingPredictions();
                 if(activeLeagueViewId) renderLeaguesUI();
                 renderLeaderboard();
+            });
+
+            db.collection('users').onSnapshot(snapshot => {
+                registeredUsersList = {};
+                snapshot.forEach(doc => {
+                    registeredUsersList[doc.id] = doc.data();
+                });
             });
 
             db.collection('leagues').onSnapshot(snapshot => {
@@ -542,9 +619,13 @@
             }
         }
 
-        function saveUserToCloud() {
+        function saveUserToCloud(pin) {
             if (db) {
-                db.collection('users').doc(currentUser).set({ username: currentUser, joinedAt: new Date().toISOString() }).catch(e=>{});
+                db.collection('users').doc(currentUser).set({ 
+                    username: currentUser, 
+                    pin: pin, 
+                    joinedAt: new Date().toISOString() 
+                }, { merge: true }).catch(e=>{});
             }
         }
 
@@ -793,7 +874,6 @@
                 return;
             }
 
-            // Sort by score descending
             users.sort((a, b) => (b.score || 0) - (a.score || 0));
 
             let html = `
@@ -849,9 +929,45 @@
                 let panelSec = document.getElementById('admin-panel-content');
                 if(authSec) authSec.classList.add('hidden');
                 if(panelSec) panelSec.classList.remove('hidden');
+                renderAdminUsersList();
                 renderAdminLeaguesList();
             } else {
                 alert('סיסמה שגויה');
+            }
+        }
+
+        function renderAdminUsersList() {
+            let container = document.getElementById('admin-users-list');
+            if(!container) return;
+            container.innerHTML = '';
+
+            let users = Object.keys(registeredUsersList);
+            if(users.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-400">אין משתמשים רשומים במערכת.</p>`;
+                return;
+            }
+
+            users.forEach(username => {
+                container.innerHTML += `
+                    <div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl border text-xs">
+                        <span class="font-bold">${username}</span>
+                        <button onclick="adminDeleteUser('${username}')" class="px-2.5 py-1 bg-red-100 text-red-600 font-bold rounded-lg hover:bg-red-200">מחק משתמש</button>
+                    </div>
+                `;
+            });
+        }
+
+        function adminDeleteUser(username) {
+            if(confirm(`האם אתה בטוח שברצונך למחוק את המשתמש "${username}"?`)) {
+                if(db) {
+                    db.collection('users').doc(username).delete().then(() => {
+                        db.collection('predictions').doc(username).delete().catch(e => {});
+                        alert('המשתמש נמחק בהצלחה');
+                        delete registeredUsersList[username];
+                        delete allUsersData[username];
+                        renderAdminUsersList();
+                    });
+                }
             }
         }
 
@@ -873,9 +989,7 @@
                             <span class="font-bold block">${l.name} (קוד: ${l.id})</span>
                             <span class="text-gray-400">משתתפים: ${l.members.join(', ')}</span>
                         </div>
-                        <div class="flex gap-1">
-                            <button onclick="adminDeleteLeague('${l.id}')" class="px-2.5 py-1 bg-red-100 text-red-600 font-bold rounded-lg hover:bg-red-200">מחק ליגה</button>
-                        </div>
+                        <button onclick="adminDeleteLeague('${l.id}')" class="px-2.5 py-1 bg-red-100 text-red-600 font-bold rounded-lg hover:bg-red-200">מחק ליגה</button>
                     </div>
                 `;
             });
@@ -908,7 +1022,6 @@
                 return;
             }
 
-            // Calculate score for each user: max 120 points (1 point deducted for each absolute difference per party)
             let batch = db.batch();
             Object.keys(allUsersData).forEach(username => {
                 let userObj = allUsersData[username];
@@ -919,7 +1032,6 @@
                         let actualVal = actualMandates[p.id] || 0;
                         diffSum += Math.abs(userVal - actualVal);
                     });
-                    // Score = 120 - (total absolute differences / 2)
                     let score = Math.max(0, 120 - Math.floor(diffSum / 2));
                     userObj.score = score;
 
