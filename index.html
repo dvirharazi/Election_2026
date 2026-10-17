@@ -591,6 +591,9 @@
                 loadUserExistingPredictions();
                 if(activeLeagueViewId) renderLeaguesUI();
                 renderLeaderboard();
+                if(!document.getElementById('tab-crowd').classList.contains('hidden')) {
+                    renderCrowdDashboard();
+                }
             });
 
             db.collection('users').onSnapshot(snapshot => {
@@ -960,12 +963,18 @@
         function adminDeleteUser(username) {
             if(confirm(`האם אתה בטוח שברצונך למחוק את המשתמש "${username}"?`)) {
                 if(db) {
-                    db.collection('users').doc(username).delete().then(() => {
-                        db.collection('predictions').doc(username).delete().catch(e => {});
-                        alert('המשתמש נמחק בהצלחה');
+                    // Delete from users collection and predictions collection simultaneously
+                    Promise.all([
+                        db.collection('users').doc(username).delete(),
+                        db.collection('predictions').doc(username).delete()
+                    ]).then(() => {
+                        alert('המשתמש וההימורים שלו נמחקו בהצלחה מהענן');
                         delete registeredUsersList[username];
                         delete allUsersData[username];
                         renderAdminUsersList();
+                    }).catch(err => {
+                        console.error(err);
+                        alert('שגיאה במחיקת המשתמש מהענן');
                     });
                 }
             }
@@ -1046,7 +1055,7 @@
                 renderLeaderboard();
             }).catch(err => {
                 console.error(err);
-                alert('שגיאה בשקלול הניקוד בענן');
+                alert('שקלול הניקוד נכשל');
             });
         }
     </script>
