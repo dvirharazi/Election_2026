@@ -271,6 +271,16 @@
             
             saveUserToCloud();
             loadCloudDataAndInit();
+
+            // Handle joining league from URL after registration
+            let urlParams = new URLSearchParams(window.location.search);
+            let joinCode = urlParams.get('join');
+            if (joinCode) {
+                window.history.replaceState({}, document.title, window.location.pathname);
+                setTimeout(() => {
+                    joinLeagueDirectly(joinCode, true);
+                }, 800);
+            }
         }
 
         function changeUser() {
@@ -464,7 +474,6 @@
                     allLeaguesData[doc.id] = doc.data();
                 });
                 
-                // Check URL join param once leagues are loaded
                 checkUrlJoinParamAfterLoad();
             });
         }
@@ -473,7 +482,6 @@
             let urlParams = new URLSearchParams(window.location.search);
             let joinCode = urlParams.get('join');
             if (joinCode && currentUser) {
-                // Clear the URL parameter so it doesn't loop on refresh
                 window.history.replaceState({}, document.title, window.location.pathname);
                 joinLeagueDirectly(joinCode);
             }
@@ -759,41 +767,4 @@
 
             users.forEach((u, index) => {
                 html += `
-                    <tr class="hover:bg-gray-50">
-                        <td class="py-3 font-bold text-red-600">#${index + 1}</td>
-                        <td class="py-3 font-semibold">${u.username}</td>
-                        <td class="py-3 text-gray-600">${u.pm || 'לא נבחר'}</td>
-                        <td class="py-3 font-black text-left">0 נק'</td>
-                    </tr>
-                `;
-            });
-
-            html += `</tbody></table>`;
-            container.innerHTML = html;
-        }
-
-        function openAdmin() {
-            document.getElementById('admin-modal').classList.remove('hidden');
-        }
-
-        function closeAdmin() {
-            document.getElementById('admin-modal').classList.add('hidden');
-        }
-
-        function verifyAdmin() {
-            let pass = document.getElementById('admin-pass-input').value;
-            if (pass === '2026') {
-                document.getElementById('admin-auth-section').classList.add('hidden');
-                document.getElementById('admin-panel-content').classList.remove('hidden');
-            } else {
-                alert('סיסמה שגויה');
-            }
-        }
-
-        function calculateScores() {
-            alert('תוצאות האמת עודכנו והניקוד חושב בהצלחה לכל השחקנים בענן!');
-            closeAdmin();
-        }
-    </script>
-</body>
-</html>
+                    <tr class="hover:bg-gray-50
