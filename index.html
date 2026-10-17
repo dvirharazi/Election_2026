@@ -298,6 +298,15 @@
             
             saveUserToCloud();
             loadCloudData();
+
+            // Check if there was a pending join code in URL and process it now!
+            let urlParams = new URLSearchParams(window.location.search);
+            let joinCode = urlParams.get('join');
+            if (joinCode) {
+                setTimeout(() => {
+                    joinLeagueDirectly(joinCode);
+                }, 800);
+            }
         }
 
         function changeUser() {
@@ -570,7 +579,10 @@
         function joinLeagueByCode() {
             let code = document.getElementById('join-league-code').value.trim().toUpperCase();
             if (!code) return;
+            joinLeagueDirectly(code);
+        }
 
+        function joinLeagueDirectly(code) {
             if (typeof db !== 'undefined') {
                 db.collection('leagues').doc(code).get().then(doc => {
                     if (!doc.exists) {
@@ -581,11 +593,12 @@
                     if (!league.members.includes(currentUser)) {
                         league.members.push(currentUser);
                         db.collection('leagues').doc(code).update({ members: league.members }).then(() => {
-                            alert(`הצטרפת בהצלחה לליגה "${league.name}"!`);
+                            alert(`הצטרפת בהצלחה לליגה "${league.name}"! 🏆`);
                             document.getElementById('join-league-code').value = '';
+                            switchTab('leagues');
                         });
                     } else {
-                        alert('אתה כבר חבר בליגה זו!');
+                        switchTab('leagues');
                     }
                 });
             }
@@ -596,8 +609,7 @@
             let joinCode = urlParams.get('join');
             if (joinCode && currentUser) {
                 setTimeout(() => {
-                    document.getElementById('join-league-code').value = joinCode;
-                    joinLeagueByCode();
+                    joinLeagueDirectly(joinCode);
                 }, 1000);
             }
         }
