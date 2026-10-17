@@ -70,7 +70,7 @@
                     </h2>
                     <button onclick="resetMandates()" class="text-xs text-red-600 hover:underline">איפוס טופס</button>
                 </div>
-                <p class="text-xs text-gray-500">הקלד חופשי את מספר המנדטים לכל מפלגה.</p>
+                <p class="text-xs text-gray-500">ניתן להיכנס ולעדכן את ההימור שלך בכל עת!</p>
                 
                 <div id="parties-list" class="space-y-3">
                     <!-- Dynamic Parties Loaded Here -->
@@ -161,25 +161,42 @@
 
     <!-- ADMIN MODAL -->
     <div id="admin-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+        <div class="bg-white rounded-3xl max-w-xl w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b pb-3">
                 <h3 class="font-black text-lg">פאנל ניהול מערכת</h3>
                 <button onclick="closeAdmin()" class="text-gray-400 hover:text-gray-600 font-bold text-lg">✕</button>
             </div>
             
             <div id="admin-auth-section" class="space-y-3">
-                <p class="text-sm text-gray-600">הכנס סיסמת מנהל (ברירת מחדל: 2026):</p>
+                <p class="text-sm text-gray-600">הכנס סיסמת מנהל:</p>
                 <input type="password" id="admin-pass-input" placeholder="סיסמה..." class="w-full p-3 border rounded-xl">
                 <button onclick="verifyAdmin()" class="w-full py-3 bg-red-600 text-white font-bold rounded-xl">כניסה לפאנל</button>
             </div>
 
-            <div id="admin-panel-content" class="hidden space-y-4 max-h-[70vh] overflow-y-auto">
+            <div id="admin-panel-content" class="hidden space-y-6">
                 <p class="text-xs text-green-600 font-bold">✔ מחובר כמנהל מערכת</p>
-                <h4 class="font-bold text-sm">הזנת תוצאות אמת (לצורך חישוב ניקוד):</h4>
-                <div id="admin-actual-mandates" class="space-y-2">
-                    <!-- Populated via JS -->
+                
+                <!-- Manage Leagues & Users -->
+                <div class="space-y-3 border-b pb-4">
+                    <h4 class="font-bold text-sm text-red-600">ניהול ליגות ומשתמשים:</h4>
+                    <div id="admin-leagues-list" class="space-y-2 max-h-40 overflow-y-auto">
+                        <!-- Populated via JS -->
+                    </div>
                 </div>
-                <button onclick="calculateScores()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl transition">חשב מחדש ניקוד לכל השחקנים</button>
+
+                <!-- Actual Mandates & Scoring -->
+                <div class="space-y-3">
+                    <h4 class="font-bold text-sm text-blue-600">הזנת תוצאות אמת ושקלול ניקוד:</h4>
+                    <p class="text-xs text-gray-500">הזן כמה מנדטים קיבלה כל מפלגה בתוצאות האמת (סך הכל 120):</p>
+                    <div id="admin-actual-mandates" class="space-y-2 max-h-48 overflow-y-auto">
+                        <!-- Populated via JS -->
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-xl flex justify-between items-center font-bold text-sm">
+                        <span>סך מנדטים אמת:</span>
+                        <span id="admin-actual-total">0 / 120</span>
+                    </div>
+                    <button onclick="calculateScores()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl transition">חשב מחדש ניקוד לכל השחקנים בענן</button>
+                </div>
             </div>
         </div>
     </div>
@@ -322,6 +339,15 @@
                         </div>
                     `;
                 }
+
+                if(adminContainer) {
+                    adminContainer.innerHTML += `
+                        <div class="flex justify-between items-center bg-gray-50 p-2 rounded-lg text-sm">
+                            <span>${p.name}</span>
+                            <input type="number" id="admin-actual-${p.id}" value="0" oninput="calcAdminActualTotal()" class="w-16 p-1 text-center border rounded-lg font-bold">
+                        </div>
+                    `;
+                }
             });
             calcTotalMandates();
             renderCoalitionUI();
@@ -362,6 +388,19 @@
                 counterBox.innerHTML = `סך הכל: <span id="total-mandates">${total}</span> / 120`;
             }
             updateCoalitionTotal();
+        }
+
+        function calcAdminActualTotal() {
+            let total = 0;
+            partiesData.forEach(p => {
+                let input = document.getElementById(`admin-actual-${p.id}`);
+                if(input) total += parseInt(input.value) || 0;
+            });
+            let totalElem = document.getElementById('admin-actual-total');
+            if(totalElem) {
+                totalElem.innerText = `${total} / 120`;
+                totalElem.className = total === 120 ? "font-bold text-green-600" : "font-bold text-red-600";
+            }
         }
 
         function updateCoalitionTotal() {
@@ -432,13 +471,14 @@
                 mandates: userPredictions,
                 coalition: userCoalition,
                 pm: userPM,
+                score: 0,
                 updatedAt: new Date().toISOString()
             };
 
             if (db) {
                 db.collection('predictions').doc(currentUser).set(predictionData)
                 .then(() => {
-                    alert('ההימורים נשמרו בהצלחה בענן! 🎯');
+                    alert('ההימורים נשמרו בהצלחה בענן! (ניתן לעדכן בכל עת) 🎯');
                     switchTab('crowd');
                 })
                 .catch(err => {
@@ -480,6 +520,7 @@
                     allUsersData[doc.id] = doc.data();
                 });
                 if(activeLeagueViewId) renderLeaguesUI();
+                renderLeaderboard();
             });
 
             db.collection('leagues').onSnapshot(snapshot => {
@@ -487,6 +528,7 @@
                 snapshot.forEach(doc => {
                     allLeaguesData[doc.id] = doc.data();
                 });
+                renderLeaguesUI();
                 checkUrlJoinParamAfterLoad();
             });
         }
@@ -626,12 +668,13 @@
                 let membersHtml = '';
                 l.members.forEach((m, idx) => {
                     let userPred = allUsersData[m];
+                    let userScore = userPred && userPred.score !== undefined ? userPred.score : 0;
                     membersHtml += `
                         <tr class="hover:bg-gray-50">
                             <td class="py-3 font-bold text-red-600">#${idx + 1}</td>
                             <td class="py-3 font-semibold">${m}</td>
                             <td class="py-3 text-gray-600">${userPred ? (userPred.pm || 'לא נבחר') : 'טרם הימר'}</td>
-                            <td class="py-3 font-black text-left">0 נק'</td>
+                            <td class="py-3 font-black text-left">${userScore} נק'</td>
                         </tr>
                     `;
                 });
@@ -695,15 +738,12 @@
             } else {
                 myLeagues.forEach(l => {
                     myLeaguesHtml += `
-                        <div onclick="activeLeagueViewId = '${l.id}'; renderLeaguesUI();" class="bg-gray-50 p-4 rounded-2xl border border-gray-200 hover:border-red-500 cursor-pointer transition space-y-2">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <h4 class="font-bold text-base text-gray-900">${l.name}</h4>
-                                    <p class="text-xs text-red-600 font-semibold mt-0.5">🎁 פרס: ${l.prize}</p>
-                                </div>
-                                <span class="bg-blue-100 text-blue-700 font-mono text-xs font-bold px-2.5 py-1 rounded-lg">קוד: ${l.id}</span>
+                        <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200 flex justify-between items-center transition space-y-2">
+                            <div onclick="activeLeagueViewId = '${l.id}'; renderLeaguesUI();" class="cursor-pointer flex-1">
+                                <h4 class="font-bold text-base text-gray-900">${l.name}</h4>
+                                <p class="text-xs text-red-600 font-semibold mt-0.5">🎁 פרס: ${l.prize} | חברים: ${l.members.length}</p>
                             </div>
-                            <p class="text-xs text-gray-500">חברים בליגה: ${l.members.length} משתתפים</p>
+                            <span class="bg-blue-100 text-blue-700 font-mono text-xs font-bold px-2.5 py-1 rounded-lg">קוד: ${l.id}</span>
                         </div>
                     `;
                 });
@@ -753,6 +793,9 @@
                 return;
             }
 
+            // Sort by score descending
+            users.sort((a, b) => (b.score || 0) - (a.score || 0));
+
             let html = `
                 <table class="w-full text-right text-sm">
                     <thead>
@@ -767,12 +810,13 @@
             `;
 
             users.forEach((u, index) => {
+                let userScore = u.score !== undefined ? u.score : 0;
                 html += `
                     <tr class="hover:bg-gray-50">
                         <td class="py-3 font-bold text-red-600">#${index + 1}</td>
                         <td class="py-3 font-semibold">${u.username}</td>
                         <td class="py-3 text-gray-600">${u.pm || 'לא נבחר'}</td>
-                        <td class="py-3 font-black text-left">0 נק'</td>
+                        <td class="py-3 font-black text-left">${userScore} נק'</td>
                     </tr>
                 `;
             });
@@ -789,24 +833,109 @@
         function closeAdmin() {
             let modal = document.getElementById('admin-modal');
             if(modal) modal.classList.add('hidden');
+            let authSec = document.getElementById('admin-auth-section');
+            let panelSec = document.getElementById('admin-panel-content');
+            if(authSec) authSec.classList.remove('hidden');
+            if(panelSec) panelSec.classList.add('hidden');
+            let passInput = document.getElementById('admin-pass-input');
+            if(passInput) passInput.value = "";
         }
 
         function verifyAdmin() {
             let passInput = document.getElementById('admin-pass-input');
             let pass = passInput ? passInput.value : "";
-            if (pass === '2026') {
+            if (pass === 'D841996h') {
                 let authSec = document.getElementById('admin-auth-section');
                 let panelSec = document.getElementById('admin-panel-content');
                 if(authSec) authSec.classList.add('hidden');
                 if(panelSec) panelSec.classList.remove('hidden');
+                renderAdminLeaguesList();
             } else {
                 alert('סיסמה שגויה');
             }
         }
 
+        function renderAdminLeaguesList() {
+            let container = document.getElementById('admin-leagues-list');
+            if(!container) return;
+            container.innerHTML = '';
+
+            let leagues = Object.values(allLeaguesData);
+            if(leagues.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-400">אין ליגות פעילות במערכת.</p>`;
+                return;
+            }
+
+            leagues.forEach(l => {
+                container.innerHTML += `
+                    <div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl border text-xs">
+                        <div>
+                            <span class="font-bold block">${l.name} (קוד: ${l.id})</span>
+                            <span class="text-gray-400">משתתפים: ${l.members.join(', ')}</span>
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="adminDeleteLeague('${l.id}')" class="px-2.5 py-1 bg-red-100 text-red-600 font-bold rounded-lg hover:bg-red-200">מחק ליגה</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function adminDeleteLeague(leagueId) {
+            if(confirm('האם אתה בטוח שברצונך למחוק ליגה זו?')) {
+                if(db) {
+                    db.collection('leagues').doc(leagueId).delete().then(() => {
+                        alert('הליגה נמחקה בהצלחה');
+                        delete allLeaguesData[leagueId];
+                        renderAdminLeaguesList();
+                    });
+                }
+            }
+        }
+
         function calculateScores() {
-            alert('תוצאות האמת עודכנו והניקוד חושב בהצלחה לכל השחקנים בענן!');
-            closeAdmin();
+            let actualTotal = 0;
+            let actualMandates = {};
+            partiesData.forEach(p => {
+                let input = document.getElementById(`admin-actual-${p.id}`);
+                let val = input ? parseInt(input.value) || 0 : 0;
+                actualMandates[p.id] = val;
+                actualTotal += val;
+            });
+
+            if(actualTotal !== 120) {
+                alert(`סך מנדטים אמת חייב להיות בדיוק 120! כרגע הוזנו ${actualTotal} מנדטים.`);
+                return;
+            }
+
+            // Calculate score for each user: max 120 points (1 point deducted for each absolute difference per party)
+            let batch = db.batch();
+            Object.keys(allUsersData).forEach(username => {
+                let userObj = allUsersData[username];
+                if(userObj && userObj.mandates) {
+                    let diffSum = 0;
+                    partiesData.forEach(p => {
+                        let userVal = userObj.mandates[p.id] || 0;
+                        let actualVal = actualMandates[p.id] || 0;
+                        diffSum += Math.abs(userVal - actualVal);
+                    });
+                    // Score = 120 - (total absolute differences / 2)
+                    let score = Math.max(0, 120 - Math.floor(diffSum / 2));
+                    userObj.score = score;
+
+                    let docRef = db.collection('predictions').doc(username);
+                    batch.update(docRef, { score: score });
+                }
+            });
+
+            batch.commit().then(() => {
+                alert('תוצאות האמת עודכנו והניקוד חושב בהצלחה לכל השחקנים בענן! 🎖️');
+                closeAdmin();
+                renderLeaderboard();
+            }).catch(err => {
+                console.error(err);
+                alert('שגיאה בשקלול הניקוד בענן');
+            });
         }
     </script>
 </body>
