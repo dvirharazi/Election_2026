@@ -156,6 +156,20 @@
 
     </main>
 
+    <!-- VIEW USER PREDICTION MODAL -->
+    <div id="user-pred-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl max-h-[85vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 id="modal-username-title" class="font-black text-lg text-red-600">הימורי השחקן</h3>
+                <button onclick="closeUserPredModal()" class="text-gray-400 hover:text-gray-600 font-bold text-lg">✕</button>
+            </div>
+            <div id="modal-user-details" class="space-y-3 text-sm">
+                <!-- Populated via JS -->
+            </div>
+            <button onclick="closeUserPredModal()" class="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition">סגור</button>
+        </div>
+    </div>
+
     <!-- ADMIN MODAL -->
     <div id="admin-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl max-w-xl w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -772,7 +786,9 @@
                     membersHtml += `
                         <tr class="hover:bg-gray-50">
                             <td class="py-3 font-bold text-red-600">#${idx + 1}</td>
-                            <td class="py-3 font-semibold">${m}</td>
+                            <td class="py-3 font-semibold">
+                                <button onclick="viewUserPrediction('${m}')" class="text-blue-600 hover:underline font-bold text-right">${m} 👁️</button>
+                            </td>
                             <td class="py-3 text-gray-600">${userPred ? (userPred.pm || 'לא נבחר') : 'טרם הימר'}</td>
                             <td class="py-3 font-black text-left">${userScore} נק'</td>
                         </tr>
@@ -800,7 +816,7 @@
 
                         <!-- Members Table -->
                         <div class="space-y-3">
-                            <h3 class="font-bold text-lg">חברי הליגה</h3>
+                            <h3 class="font-bold text-lg">חברי הליגה (לחץ על שם שחקן לצפייה בהימורו)</h3>
                             <div class="overflow-x-auto">
                                 <table class="w-full text-right text-sm">
                                     <thead>
@@ -881,6 +897,49 @@
                     </div>
                 </div>
             `;
+        }
+
+        function viewUserPrediction(username) {
+            let uData = allUsersData[username];
+            let titleElem = document.getElementById('modal-username-title');
+            let detailsElem = document.getElementById('modal-user-details');
+            let modal = document.getElementById('user-pred-modal');
+
+            if(!titleElem || !detailsElem || !modal) return;
+
+            titleElem.innerText = `ההימור של: ${username}`;
+
+            if (!uData || !uData.mandates) {
+                detailsElem.innerHTML = `<p class="text-center text-gray-500 py-4">השחקן טרם הזין הימורים במערכת.</p>`;
+            } else {
+                let html = `
+                    <div class="bg-gray-50 p-3 rounded-xl mb-3">
+                        <span class="block text-xs text-gray-500">ראש ממשלה נבחר:</span>
+                        <span class="font-black text-red-600 text-base">${uData.pm || 'לא נבחר'}</span>
+                    </div>
+                    <div class="space-y-1.5 max-h-60 overflow-y-auto border p-2 rounded-xl">
+                `;
+                partiesData.forEach(p => {
+                    let mandates = uData.mandates[p.id] || 0;
+                    if (mandates > 0) {
+                        html += `
+                            <div class="flex justify-between items-center bg-white p-2 rounded-lg border text-xs">
+                                <span class="font-bold">${p.name}</span>
+                                <span class="font-black text-blue-600">${mandates} מנדטים</span>
+                            </div>
+                        `;
+                    }
+                });
+                html += `</div>`;
+                detailsElem.innerHTML = html;
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeUserPredModal() {
+            let modal = document.getElementById('user-pred-modal');
+            if(modal) modal.classList.add('hidden');
         }
 
         function renderLeaderboard() {
