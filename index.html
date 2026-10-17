@@ -107,6 +107,7 @@
                         <option value="איתמר בן גביר">איתמר בן גביר (עוצמה יהודית)</option>
                         <option value="אביגדור ליברמן">אביגדור ליברמן (ישראל ביתנו)</option>
                         <option value="בצלאל סמוטריץ'">בצלאל סמוטריץ' (הציונות הדתית)</option>
+                        <option value="סבב בחירות נוסף">סבב בחירות נוסף (בחירות חוזרות)</option>
                         <option value="רוטציה / ממשלת מעבר">רוטציה / ממשלת מעבר / ללא הכרעה</option>
                     </select>
                 </div>
@@ -649,7 +650,6 @@
                 }
             });
 
-            // Calculate rounded integer averages and track remainder for normalization to 120
             let normalizedMandates = {};
             let currentTotal = 0;
             let remainders = [];
@@ -662,7 +662,6 @@
                 remainders.push({ id: p.id, remainder: exactAvg - floored });
             });
 
-            // Distribute missing mandates to reach exactly 120 based on highest remainders
             remainders.sort((a, b) => b.remainder - a.remainder);
             let diff = 120 - currentTotal;
             for (let i = 0; i < Math.abs(diff); i++) {
@@ -791,7 +790,7 @@
                             <span class="bg-blue-100 text-blue-700 font-mono text-sm font-bold px-3 py-1.5 rounded-xl">קוד: ${l.id}</span>
                         </div>
 
-                        <!-- Big CTA Button to Predictions (Allows editing anytime) -->
+                        <!-- Big CTA Button to Predictions -->
                         <div class="bg-red-50 border border-red-200 rounded-2xl p-5 text-center space-y-3">
                             <h3 class="font-black text-lg text-red-900">רוצה לעדכן את ההימורים שלך?</h3>
                             <button onclick="switchTab('predictions')" class="w-full sm:w-auto px-8 py-3.5 bg-red-600 hover:bg-red-700 text-white font-black rounded-xl shadow-md transition text-base">
