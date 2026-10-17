@@ -264,21 +264,21 @@
         }
 
         const partiesData = [
-            { id: 'likud', name: 'הליכוד', leader: 'בנימין נתניהו', color: 'bg-blue-600' },
-            { id: 'yeshar', name: 'ישר!', leader: 'גדי איזנקוט', color: 'bg-cyan-600' },
-            { id: 'beyachad', name: 'ביחד (יש עתיד ובנט)', leader: 'נפתלי בנט ויאיר לפיד', color: 'bg-indigo-600' },
-            { id: 'democrats', name: 'הדמוקרטים', leader: 'יאיר גולן', color: 'bg-red-500' },
-            { id: 'shas', name: "ש\"ס", leader: 'אריה דרעי', color: 'bg-amber-600' },
-            { id: 'otzma', name: 'עוצמה יהודית', leader: 'איתמר בן גביר', color: 'bg-yellow-600' },
-            { id: 'israel_beiteinu', name: 'ישראל ביתנו', leader: 'אביגדור ליברמן', color: 'bg-slate-700' },
-            { id: 'yahadut_hatorah', name: 'יהדות התורה', leader: 'אגודת ישראל - דגל התורה', color: 'bg-sky-700' },
-            { id: 'religious_zionism', name: 'הציונות הדתית - זהות', leader: 'בצלאל סמוטריץ\' ומשה פייגלין', color: 'bg-blue-800' },
-            { id: 'noam', name: 'נעם', leader: 'אבי מעוז', color: 'bg-emerald-700' },
-            { id: 'miluimnikim', name: 'המילואימניקים', leader: 'תנועת המילואימניקים', color: 'bg-stone-700' },
-            { id: 'am_yisrael', name: 'עמך ישראל', leader: 'תנועה חברתית', color: 'bg-teal-600' },
-            { id: 'raam', name: 'רע"מ', leader: 'מנסור עבאס', color: 'bg-emerald-600' },
-            { id: 'hadash_taal', name: 'חד"ש-תע"ל', leader: 'איימן עודה ואחמד טיבי', color: 'bg-red-700' },
-            { id: 'balad', name: 'בל"ד', leader: 'סמי אבו שחאדה', color: 'bg-purple-700' }
+            { id: 'likud', name: 'הליכוד', leader: 'בנימין נתניהו', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Benjamin_Netanyahu_2023_%28cropped%29.jpg/220px-Benjamin_Netanyahu_2023_%28cropped%29.jpg', color: 'bg-blue-600' },
+            { id: 'yeshar', name: 'ישר!', leader: 'גדי איזנקוט', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Gadi_Eisenkot_2022_%28cropped%29.jpg/220px-Gadi_Eisenkot_2022_%28cropped%29.jpg', color: 'bg-cyan-600' },
+            { id: 'beyachad', name: 'ביחד (יש עתיד ובנט)', leader: 'נפתלי בנט ויאיר לפיד', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Naftali_Bennett_official_photo_%28cropped%29.jpg/220px-Naftali_Bennett_official_photo_%28cropped%29.jpg', color: 'bg-indigo-600' },
+            { id: 'democrats', name: 'הדמוקרטים', leader: 'יאיר גולן', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Yair_Golan_2019.jpg/220px-Yair_Golan_2019.jpg', color: 'bg-red-500' },
+            { id: 'shas', name: "ש\"ס", leader: 'אריה דרעי', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Aryeh_Deri_2023.jpg/220px-Aryeh_Deri_2023.jpg', color: 'bg-amber-600' },
+            { id: 'otzma', name: 'עוצמה יהודית', leader: 'איתמר בן גביר', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Itamar_Ben-Gvir_2022_%28cropped%29.jpg/220px-Itamar_Ben-Gvir_2022_%28cropped%29.jpg', color: 'bg-yellow-600' },
+            { id: 'israel_beiteinu', name: 'ישראל ביתנו', leader: 'אביגדור ליברמן', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Avigdor_Lieberman_2023.jpg/220px-Avigdor_Lieberman_2023.jpg', color: 'bg-slate-700' },
+            { id: 'yahadut_hatorah', name: 'יהדות התורה', leader: 'אגודת ישראל - דגל התורה', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Moshe_Gafni_2015.jpg/220px-Moshe_Gafni_2015.jpg', color: 'bg-sky-700' },
+            { id: 'religious_zionism', name: 'הציונות הדתית - זהות', leader: 'בצלאל סמוטריץ\'', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Bezalel_Smotrich_2023_%28cropped%29.jpg/220px-Bezalel_Smotrich_2023_%28cropped%29.jpg', color: 'bg-blue-800' },
+            { id: 'noam', name: 'נעם', leader: 'אבי מעוז', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Avi_Maoz_Knesset_2022.jpg/220px-Avi_Maoz_Knesset_2022.jpg', color: 'bg-emerald-700' },
+            { id: 'miluimnikim', name: 'המילואימניקים', leader: 'תנועת המילואימניקים', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Soldier_icon.svg/200px-Soldier_icon.svg.png', color: 'bg-stone-700' },
+            { id: 'am_yisrael', name: 'עמך ישראל', leader: 'תנועה חברתית', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Soldier_icon.svg/200px-Soldier_icon.svg.png', color: 'bg-teal-600' },
+            { id: 'raam', name: 'רע"מ', leader: 'מנסור עבאס', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Mansour_Abbas_2021.jpg/220px-Mansour_Abbas_2021.jpg', color: 'bg-emerald-600' },
+            { id: 'hadash_taal', name: 'חד"ש-תע"ל', leader: 'איימן עודה', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Ayman_Odeh_2019.jpg/220px-Ayman_Odeh_2019.jpg', color: 'bg-red-700' },
+            { id: 'balad', name: 'בל"ד', leader: 'סמי אבו שחאדה', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Sami_Abu_Shehadeh_2020.jpg/220px-Sami_Abu_Shehadeh_2020.jpg', color: 'bg-purple-700' }
         ];
 
         let currentUser = localStorage.getItem('election_username') || null;
@@ -374,9 +374,12 @@
                 if(container) {
                     container.innerHTML += `
                         <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 gap-2">
-                            <div>
-                                <span class="font-bold text-sm block">${p.name}</span>
-                                <span class="text-xs text-gray-400">${p.leader}</span>
+                            <div class="flex items-center gap-3">
+                                <img src="${p.img}" class="w-10 h-10 rounded-full object-cover border border-gray-300 shadow-sm" alt="${p.name}">
+                                <div>
+                                    <span class="font-bold text-sm block">${p.name}</span>
+                                    <span class="text-xs text-gray-400">${p.leader}</span>
+                                </div>
                             </div>
                             <div class="flex items-center gap-2">
                                 <button onclick="updateMandate('${p.id}', -1)" class="w-8 h-8 bg-white border rounded-lg font-bold text-gray-600 shadow-sm">-</button>
@@ -389,7 +392,8 @@
 
                 if(coalitionContainer) {
                     coalitionContainer.innerHTML += `
-                        <div id="coalition-card-${p.id}" onclick="toggleCoalition('${p.id}')" class="p-3 border border-gray-200 rounded-xl cursor-pointer text-center transition bg-white hover:border-red-500">
+                        <div id="coalition-card-${p.id}" onclick="toggleCoalition('${p.id}')" class="p-3 border border-gray-200 rounded-xl cursor-pointer text-center transition bg-white hover:border-red-500 flex flex-col items-center gap-1">
+                            <img src="${p.img}" class="w-8 h-8 rounded-full object-cover border" alt="${p.name}">
                             <span class="font-bold text-xs block">${p.name}</span>
                         </div>
                     `;
@@ -398,7 +402,10 @@
                 if(adminContainer) {
                     adminContainer.innerHTML += `
                         <div class="flex justify-between items-center bg-gray-50 p-2 rounded-lg text-sm">
-                            <span>${p.name}</span>
+                            <div class="flex items-center gap-2">
+                                <img src="${p.img}" class="w-6 h-6 rounded-full object-cover">
+                                <span>${p.name}</span>
+                            </div>
                             <input type="number" id="admin-actual-${p.id}" value="0" oninput="calcAdminActualTotal()" class="w-16 p-1 text-center border rounded-lg font-bold">
                         </div>
                     `;
@@ -516,9 +523,9 @@
                 let card = document.getElementById(`coalition-card-${p.id}`);
                 if(card) {
                     if (userCoalition.includes(p.id)) {
-                        card.className = "p-3 border-2 border-red-600 bg-red-50 rounded-xl cursor-pointer text-center transition shadow-sm";
+                        card.className = "p-3 border-2 border-red-600 bg-red-50 rounded-xl cursor-pointer text-center transition shadow-sm flex flex-col items-center gap-1";
                     } else {
-                        card.className = "p-3 border border-gray-200 bg-white rounded-xl cursor-pointer text-center transition hover:border-red-300";
+                        card.className = "p-3 border border-gray-200 bg-white rounded-xl cursor-pointer text-center transition hover:border-red-300 flex flex-col items-center gap-1";
                     }
                 }
             });
@@ -694,8 +701,11 @@
                 let widthPercent = (mandates / 40) * 100;
                 html += `
                     <div class="space-y-1">
-                        <div class="flex justify-between text-sm font-bold">
-                            <span>${p.name}</span>
+                        <div class="flex justify-between items-center text-sm font-bold">
+                            <div class="flex items-center gap-2">
+                                <img src="${p.img}" class="w-7 h-7 rounded-full object-cover border">
+                                <span>${p.name}</span>
+                            </div>
                             <span>${mandates} מנדטים בממוצע</span>
                         </div>
                         <div class="w-full bg-gray-100 h-3 rounded-full overflow-hidden">
@@ -948,7 +958,10 @@
                     if (mandates > 0) {
                         html += `
                             <div class="flex justify-between items-center bg-white p-2 rounded-lg border text-xs">
-                                <span class="font-bold">${p.name}</span>
+                                <div class="flex items-center gap-2">
+                                    <img src="${p.img}" class="w-6 h-6 rounded-full object-cover">
+                                    <span class="font-bold">${p.name}</span>
+                                </div>
                                 <span class="font-black text-blue-600">${mandates} מנדטים</span>
                             </div>
                         `;
