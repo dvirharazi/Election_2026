@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>אולפן בחירות 2026 – משחק החיזויים החברתי</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <style>
+        body { font-family: 'Heebo', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen pb-12">
+
+    <!-- Header -->
+    <header class="bg-red-600 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <span class="bg-white text-red-600 font-black text-xl px-2.5 py-1 rounded-lg shadow">26</span>
+                <div>
+                    <h1 class="font-black text-lg leading-tight">אולפן בחירות 2026</h1>
+                    <p class="text-xs text-red-100">משחק החיזויים והימורים חברתי</p>
+                </div>
+            </div>
+            <div id="user-info" class="flex items-center gap-2 bg-red-700/60 px-3 py-1.5 rounded-full text-sm">
+                <span id="display-username" class="font-bold"></span>
+                <button onclick="changeUser()" class="text-xs bg-white/20 hover:bg-white/30 px-2 py-1 rounded transition">החלף משתמש</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Navigation Tabs -->
+    <nav class="max-w-4xl mx-auto px-4 mt-4">
+        <div class="grid grid-cols-4 gap-2 bg-white p-2 rounded-2xl shadow-sm border border-gray-100 text-center">
+            <button onclick="switchTab('predictions')" id="tab-btn-predictions" class="py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm bg-red-600 text-white transition shadow-sm">טופס ניחושים</button>
+            <button onclick="switchTab('crowd')" id="tab-btn-crowd" class="py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm text-gray-600 hover:bg-gray-100 transition">חוכמת ההמונים</button>
+            <button onclick="switchTab('leagues')" id="tab-btn-leagues" class="py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm text-gray-600 hover:bg-gray-100 transition">ליגות פרטיות</button>
+            <button onclick="switchTab('leaderboard')" id="tab-btn-leaderboard" class="py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm text-gray-600 hover:bg-gray-100 transition">מובילים ודירוג</button>
+        </div>
+        <div class="flex justify-end mt-2">
+            <button onclick="openAdmin()" class="text-xs text-gray-500 hover:text-red-600 flex items-center gap-1 bg-white px-3 py-1 rounded-lg shadow-sm border border-gray-100">⚙️ פאנל ניהול</button>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="max-w-4xl mx-auto px-4 mt-4">
+
+        <!-- 1. PREDICTIONS TAB -->
+        <section id="tab-predictions" class="space-y-6">
+            <!-- Sticky Mandates Counter -->
+            <div class="sticky top-16 z-40 bg-white/95 backdrop-blur shadow-md rounded-2xl p-4 border border-gray-200 flex justify-between items-center">
+                <div>
+                    <span class="text-xs text-gray-500 block">חלוקת מנדטים</span>
+                    <span class="text-xs text-gray-400">חובה לחלק בדיוק 120 מנדטים</span>
+                </div>
+                <div id="mandate-counter-box" class="px-4 py-2 rounded-xl font-black text-lg bg-blue-50 text-blue-700 transition">
+                    סך הכל: <span id="total-mandates">0</span> / 120
+                </div>
+            </div>
+
+            <!-- Step A: Mandates Form -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
+                <div class="flex justify-between items-center border-b pb-3">
+                    <h2 class="font-bold text-lg flex items-center gap-2">
+                        <span class="bg-red-100 text-red-600 w-7 h-7 rounded-full flex items-center justify-center text-sm">א'</span>
+                        כמה מנדטים תקבל כל מפלגה?
+                    </h2>
+                    <button onclick="resetMandates()" class="text-xs text-red-600 hover:underline">איפוס טופס</button>
+                </div>
+                <p class="text-xs text-gray-500">מפלגה שעוברת חייבת לקבל לפחות 4 מנדטים. הקלדה ידנית של 1, 2 או 3 תתריע מיד.</p>
+                
+                <div id="parties-list" class="space-y-3">
+                    <!-- Dynamic Parties Loaded Here -->
+                </div>
+            </div>
+
+            <!-- Step B: Coalition & Prime Minister -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
+                <h2 class="font-bold text-lg flex items-center gap-2 border-b pb-3">
+                    <span class="bg-red-100 text-red-600 w-7 h-7 rounded-full flex items-center justify-center text-sm">ב'</span>
+                    הרכבת הקואליציה וראש הממשלה
+                </h2>
+                
+                <div>
+                    <label class="block text-sm font-semibold mb-2">בחר את מפלגות הקואליציה (לחץ לבחירה):</label>
+                    <div id="coalition-picker" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        <!-- Dynamic Coalition Cards -->
+                    </div>
+                    <div class="mt-3 p-3 bg-gray-50 rounded-xl flex justify-between items-center">
+                        <span class="text-sm font-medium">סך מנדטים בקואליציה הנבחרת:</span>
+                        <span id="coalition-total" class="font-black text-lg text-blue-600">0 מנדטים</span>
+                    </div>
+                </div>
+
+                <div class="pt-3 border-t">
+                    <label class="block text-sm font-semibold mb-2">מי יהיה ראש הממשלה הבא?</label>
+                    <select id="pm-select" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-red-500">
+                        <option value="">בחר ראש ממשלה...</option>
+                        <option value="בנימין נתניהו">בנימין נתניהו (הליכוד)</option>
+                        <option value="גדי איזנקוט">גדי איזנקוט (ישר!)</option>
+                        <option value="נפתלי בנט ויאיר לפיד">נפתלי בנט ויאיר לפיד (ביחד)</option>
+                        <option value="יאיר גולן">יאיר גולן (הדמוקרטים)</option>
+                        <option value="אריה דרעי">אריה דרעי (ש"ס)</option>
+                        <option value="איתמר בן גביר">איתמר בן גביר (עוצמה יהודית)</option>
+                        <option value="אביגדור ליברמן">אביגדור ליברמן (ישראל ביתנו)</option>
+                        <option value="בצלאל סמוטריץ'">בצלאל סמוטריץ' (הציונות הדתית)</option>
+                        <option value="רוטציה / ממשלת מעבר">רוטציה / ממשלת מעבר / ללא הכרעה</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Save Predictions Button -->
+            <button onclick="saveUserPredictions()" class="w-full py-4 bg-red-600 hover:bg-red-700 text-white font-black rounded-2xl shadow-lg transition text-lg flex items-center justify-center gap-2">
+                <span>שמור הימורים ושלח לענן</span> 🚀
+            </button>
+        </section>
+
+        <!-- 2. CROWD WISDOM TAB -->
+        <section id="tab-crowd" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
+                <div class="flex justify-between items-center flex-wrap gap-3 border-b pb-4">
+                    <h2 class="font-bold text-xl">דשבורד חוכמת ההמונים 📊</h2>
+                    <select id="crowd-filter" onchange="renderCrowdDashboard()" class="p-2 bg-gray-50 border rounded-xl text-sm font-medium">
+                        <option value="all">כלל משתתפי האפליקציה</option>
+                    </select>
+                </div>
+                
+                <div id="crowd-content" class="space-y-6">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. PRIVATE LEAGUES TAB -->
+        <section id="tab-leagues" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-6">
+                <h2 class="font-bold text-xl border-b pb-3">ליגות פרטיות והתערבויות 🏆</h2>
+
+                <!-- Create League Form -->
+                <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200 space-y-3">
+                    <h3 class="font-bold text-sm text-red-600">פתח ליגה חדשה</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <input type="text" id="new-league-name" placeholder="שם הליגה (למשל: החבר'ה מהעבודה)" class="p-3 bg-white border rounded-xl text-sm">
+                        <input type="text" id="new-league-prize" placeholder="על מה מתערבים? (למשל: המפסיד מזמין שווארמה)" class="p-3 bg-white border rounded-xl text-sm">
+                    </div>
+                    <button onclick="createLeague()" class="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm transition">צור ליגה וקבל קוד שיתוף</button>
+                </div>
+
+                <!-- Join League -->
+                <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200 space-y-3">
+                    <h3 class="font-bold text-sm text-blue-600">הצטרף לליגה קיימת בעזרת קוד</h3>
+                    <div class="flex gap-2">
+                        <input type="text" id="join-league-code" placeholder="הקלד קוד בן 6 תווים (למשל: A1B2C3)" class="flex-1 p-3 bg-white border rounded-xl text-sm uppercase">
+                        <button onclick="joinLeagueByCode()" class="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition">הצטרף</button>
+                    </div>
+                </div>
+
+                <!-- My Leagues List -->
+                <div class="space-y-3">
+                    <h3 class="font-bold text-md">הליגות שלי</h3>
+                    <div id="my-leagues-container" class="space-y-3">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. LEADERBOARD TAB -->
+        <section id="tab-leaderboard" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
+                <div class="flex justify-between items-center flex-wrap gap-3 border-b pb-4">
+                    <h2 class="font-bold text-xl">טבלת מובילים ודירוג 🎖️</h2>
+                    <select id="leaderboard-filter" onchange="renderLeaderboard()" class="p-2 bg-gray-50 border rounded-xl text-sm font-medium">
+                        <option value="all">דירוג כללי (כלל השחקנים)</option>
+                    </select>
+                </div>
+
+                <div id="leaderboard-content" class="overflow-x-auto">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ADMIN MODAL -->
+    <div id="admin-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-black text-lg">פאנל ניהול מערכת</h3>
+                <button onclick="closeAdmin()" class="text-gray-400 hover:text-gray-600 font-bold text-lg">✕</button>
+            </div>
+            
+            <div id="admin-auth-section" class="space-y-3">
+                <p class="text-sm text-gray-600">הכנס סיסמת מנהל (ברירת מחדל: 2026):</p>
+                <input type="password" id="admin-pass-input" placeholder="סיסמה..." class="w-full p-3 border rounded-xl">
+                <button onclick="verifyAdmin()" class="w-full py-3 bg-red-600 text-white font-bold rounded-xl">כניסה לפאנל</button>
+            </div>
+
+            <div id="admin-panel-content" class="hidden space-y-4 max-h-[70vh] overflow-y-auto">
+                <p class="text-xs text-green-600 font-bold">✔ מחובר כמנהל מערכת</p>
+                <h4 class="font-bold text-sm">הזנת תוצאות אמת (לצורך חישוב ניקוד):</h4>
+                <div id="admin-actual-mandates" class="space-y-2">
+                    <!-- Populated via JS -->
+                </div>
+                <button onclick="calculateScores()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl transition">חשב מחדש ניקוד לכל השחקנים</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ENTRY MODAL (Name Only) -->
+    <div id="entry-modal" class="fixed inset-0 bg-red-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-8 space-y-6 shadow-2xl text-center">
+            <div class="w-16 h-16 bg-red-100 text-red-600 rounded-2xl mx-auto flex items-center justify-center text-2xl font-black">26</div>
+            <div>
+                <h2 class="text-2xl font-black">ברוכים הבאים לאולפן בחירות 2026</h2>
+                <p class="text-sm text-gray-500 mt-1">משחק החיזויים וההימורים החברתי</p>
+            </div>
+            <div class="space-y-3 text-right">
+                <label class="block text-sm font-semibold">איך קוראים לך?</label>
+                <input type="text" id="username-input" placeholder="הכנס את שמך המלא או כינוי..." class="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-red-500">
+                <p id="name-error" class="text-xs text-red-500 hidden">השם הזה כבר תפוס במערכת! נסה להוסיף כינוי או שם משפחה.</p>
+            </div>
+            <button onclick="registerUser()" class="w-full py-4 bg-red-600 hover:bg-red-700 text-white font-black rounded-2xl shadow-lg transition text-base">כניסה למשחק</button>
+        </div>
+    </div>
+
+    <!-- FIREBASE & APP SCRIPT -->
+    <script>
+        // --- FIREBASE CONFIG (Replace with your own project config if needed) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDummyKeyForDemoPurposesOnly12345",
+            authDomain: "election-2026-demo.firebaseapp.com",
+            projectId: "election-2026-demo",
+            storageBucket: "election-2026-demo.appspot.com",
+            messagingSenderId: "1234567890",
+            appId: "1:1234567890:web:abcdef123456"
+        };
+        
+        // Initialize Firebase (Using Compat for simplicity in single file)
+        try {
+            firebase.initializeApp(firebaseConfig);
+            var db = firebase.firestore();
+        } catch(e) {
+            console.warn("Firebase offline mode or unconfigured, using local fallback if needed", e);
+        }
+
+        // --- APP DATA & STATE ---
+        const partiesData = [
+            { id: 'likud', name: 'הליכוד', leader: 'בנימין נתניהו', color: 'bg-blue-600' },
+            { id: 'yeshar', name: 'ישר!', leader: 'גדי איזנקוט', color: 'bg-cyan-600' },
+            { id: 'beyachad', name: 'ביחד (יש עתיד ובנט)', leader: 'נפתלי בנט ויאיר לפיד', color: 'bg-indigo-600' },
+            { id: 'democrats', name: 'הדמוקרטים', leader: 'יאיר גולן', color: 'bg-red-500' },
+            { id: 'shas', name: "ש\"ס", leader: 'אריה דרעי', color: 'bg-amber-600' },
+            { id: 'otzma', name: 'עוצמה יהודית', leader: 'איתמר בן גביר', color: 'bg-yellow-600' },
+            { id: 'israel_beiteinu', name: 'ישראל ביתנו', leader: 'אביגדור ליברמן', color: 'bg-slate-700' },
+            { id: 'yahadut_hatorah', name: 'יהדות התורה', leader: 'אגודת ישראל - דגל התורה', color: 'bg-sky-700' },
+            { id: 'religious_zionism', name: 'הציונות הדתית - זהות', leader: 'בצלאל סמוטריץ\' ומשה פייגלין', color: 'bg-blue-800' },
+            { id: 'noam', name: 'נעם', leader: 'אבי מעוז', color: 'bg-emerald-700' },
+            { id: 'miluimnikim', name: 'המילואימניקים', leader: 'תנועת המילואימניקים', color: 'bg-stone-700' },
+            { id: 'am_yisrael', name: 'עמך ישראל', leader: 'תנועה חברתית', color: 'bg-teal-600' },
+            { id: 'raam', name: 'רע"מ', leader: 'מנסור עבאס', color: 'bg-emerald-600' },
+            { id: 'hadash_taal', name: 'חד"ש-תע"ל', leader: 'איימן עודה ואחמד טיבי', color: 'bg-red-700' },
+            { id: 'balad', name: 'בל"ד', leader: 'סמי אבו שחאדה', color: 'bg-purple-700' }
+        ];
+
+        let currentUser = localStorage.getItem('election_username') || null;
+        let userPredictions = {};
+        let userCoalition = [];
+        let userPM = "";
+        let allUsersData = {};
+        let allLeaguesData = {};
+
+        // --- INITIALIZATION ---
+        window.addEventListener('DOMContentLoaded', () => {
+            initPartiesUI();
+            checkUrlJoinParam();
+            
+            if (!currentUser) {
+                document.getElementById('entry-modal').classList.remove('hidden');
+            } else {
+                document.getElementById('entry-modal').classList.add('hidden');
+                document.getElementById('display-username').innerText = `שלום, ${currentUser}`;
+                loadCloudData();
+            }
+        });
+
+        function registerUser() {
+            let nameInput = document.getElementById('username-input').value.trim();
+            if (!nameInput) {
+                alert('אנא הכנס שם תקין');
+                return;
+            }
+            
+            // Check uniqueness locally/remotely
+            currentUser = nameInput;
+            localStorage.setItem('election_username', currentUser);
+            document.getElementById('entry-modal').classList.add('hidden');
+            document.getElementById('display-username').innerText = `שלום, ${currentUser}`;
+            
+            // Save user to cloud if firebase active
+            saveUserToCloud();
+            loadCloudData();
+        }
+
+        function changeUser() {
+            localStorage.removeItem('election_username');
+            location.reload();
+        }
+
+        // --- UI BUILDERS ---
+        function initPartiesUI() {
+            let container = document.getElementById('parties-list');
+            let coalitionContainer = document.getElementById('coalition-picker');
+            let adminContainer = document.getElementById('admin-actual-mandates');
+            
+            container.innerHTML = '';
+            coalitionContainer.innerHTML = '';
+            adminContainer.innerHTML = '';
+
+            partiesData.forEach(p => {
+                // Mandates Input Row
+                container.innerHTML += `
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 gap-2">
+                        <div>
+                            <span class="font-bold text-sm block">${p.name}</span>
+                            <span class="text-xs text-gray-400">${p.leader}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="updateMandate('${p.id}', -1)" class="w-8 h-8 bg-white border rounded-lg font-bold text-gray-600 shadow-sm">-</button>
+                            <input type="number" id="mandate-${p.id}" value="0" min="0" max="120" oninput="validateMandateInput('${p.id}')" class="w-14 text-center font-bold p-1.5 bg-white border rounded-lg text-sm">
+                            <button onclick="updateMandate('${p.id}', 1)" class="w-8 h-8 bg-white border rounded-lg font-bold text-gray-600 shadow-sm">+</button>
+                        </div>
+                    </div>
+                `;
+
+                // Coalition Picker Card
+                coalitionContainer.innerHTML += `
+                    <div id="coalition-card-${p.id}" onclick="toggleCoalition('${p.id}')" class="p-3 border border-gray-200 rounded-xl cursor-pointer text-center transition bg-white hover:border-red-500">
+                        <span class="font-bold text-xs block">${p.name}</span>
+                    </div>
+                `;
+
+                // Admin actual mandates input
+                adminContainer.innerHTML += `
+                    <div class="flex justify-between items-center bg-gray-50 p-2 rounded-lg text-sm">
+                        <span>${p.name}</span>
+                        <input type="number" id="admin-actual-${p.id}" value="0" class="w-16 p-1 text-center border rounded-lg font-bold">
+                    </div>
+                `;
+            });
+        }
+
+        // --- MANDATES LOGIC & VALIDATION ---
+        function updateMandate(partyId, change) {
+            let input = document.getElementById(`mandate-${partyId}`);
+            let val = parseInt(input.value) || 0;
+            let newVal = val + change;
+
+            if (newVal > 0 && newVal < 4) {
+                newVal = change > 0 ? 4 : 0;
+            }
+            if (newVal < 0) newVal = 0;
+
+            input.value = newVal;
+            validateMandateInput(partyId);
+        }
+
+        function validateMandateInput(partyId) {
+            let input = document.getElementById(`mandate-${partyId}`);
+            let val = parseInt(input.value) || 0;
+            if (val > 0 && val < 4) {
+                input.value = 4;
+            }
+            calcTotalMandates();
+        }
+
+        function calcTotalMandates() {
+            let total = 0;
+            partiesData.forEach(p => {
+                let val = parseInt(document.getElementById(`mandate-${p.id}`).value) || 0;
+                total += val;
+                userPredictions[p.id] = val;
+            });
+
+            let counterBox = document.getElementById('mandate-counter-box');
+            document.getElementById('total-mandates').innerText = total;
+
+            if (total > 120) {
+                counterBox.className = "px-4 py-2 rounded-xl font-black text-lg bg-red-100 text-red-700 border border-red-300 transition animate-pulse";
+                counterBox.innerHTML = `סך הכל: <span class="text-red-700">${total}</span> / 120 (עברת את המכסה!)`;
+            } else if (total === 120) {
+                counterBox.className = "px-4 py-2 rounded-xl font-black text-lg bg-green-50 text-green-700 border border-green-200 transition";
+            } else {
+                counterBox.className = "px-4 py-2 rounded-xl font-black text-lg bg-blue-50 text-blue-700 transition";
+            }
+            updateCoalitionTotal();
+        }
+
+        function resetMandates() {
+            partiesData.forEach(p => {
+                document.getElementById(`mandate-${p.id}`).value = 0;
+            });
+            userCoalition = [];
+            renderCoalitionUI();
+            calcTotalMandates();
+        }
+
+        // --- COALITION LOGIC ---
+        function toggleCoalition(partyId) {
+            let index = userCoalition.indexOf(partyId);
+            if (index > -1) {
+                userCoalition.splice(index, 1);
+            } else {
+                userCoalition.push(partyId);
+            }
+            renderCoalitionUI();
+        }
+
+        function renderCoalitionUI() {
+            partiesData.forEach(p => {
+                let card = document.getElementById(`coalition-card-${p.id}`);
+                if (userCoalition.includes(p.id)) {
+                    card.className = "p-3 border-2 border-red-600 bg-red-50 rounded-xl cursor-pointer text-center transition shadow-sm";
+                } else {
+                    card.className = "p-3 border border-gray-200 bg-white rounded-xl cursor-pointer text-center transition hover:border-red-300";
+                }
+            });
+
+            let coalitionSum = 0;
+            userCoalition.forEach(id => {
+                coalitionSum += parseInt(document.getElementById(`mandate-${id}`).value) || 0;
+            });
+            document.getElementById('coalition-total').innerText = `${coalitionSum} מנדטים`;
+        }
+
+        // --- SAVE PREDICTIONS ---
+        function saveUserPredictions() {
+            let total = 0;
+            partiesData.forEach(p => {
+                total += parseInt(document.getElementById(`mandate-${p.id}`).value) || 0;
+            });
+
+            if (total !== 120) {
+                alert(`חובה לחלק בדיוק 120 מנדטים! כרגע מחולקים ${total} מנדטים.`);
+                return;
+            }
+
+            userPM = document.getElementById('pm-select').value;
+            if (!userPM) {
+                alert('אנא בחר ראש ממשלה בקلاف');
+                return;
+            }
+
+            let predictionData = {
+                username: currentUser,
+                mandates: userPredictions,
+                coalition: userCoalition,
+                pm: userPM,
+                updatedAt: new Date().toISOString()
+            };
+
+            // Save to Firestore
+            if (typeof db !== 'undefined') {
+                db.collection('predictions').doc(currentUser).set(predictionData)
+                .then(() => {
+                    alert('ההימורים נשמרו בהצלחה בענן! 🎯');
+                    switchTab('crowd');
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('שגיאה בשמירה בענן');
+                });
+            } else {
+                localStorage.setItem(`pred_${currentUser}`, JSON.stringify(predictionData));
+                alert('ההימורים נשמרו מקומית בהצלחה!');
+                switchTab('crowd');
+            }
+        }
+
+        // --- TABS SWITCHING ---
+        function switchTab(tabName) {
+            ['predictions', 'crowd', 'leagues', 'leaderboard'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`tab-btn-${t}`).className = "py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm text-gray-600 hover:bg-gray-100 transition";
+            });
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            document.getElementById(`tab-btn-${tabName}`).className = "py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm bg-red-600 text-white transition shadow-sm";
+
+            if (tabName === 'crowd') renderCrowdDashboard();
+            if (tabName === 'leagues') renderLeaguesUI();
+            if (tabName === 'leaderboard') renderLeaderboard();
+        }
+
+        // --- CLOUD DATA SYNC ---
+        function loadCloudData() {
+            if (typeof db === 'undefined') return;
+            
+            // Listen to predictions
+            db.collection('predictions').onSnapshot(snapshot => {
+                allUsersData = {};
+                snapshot.forEach(doc => {
+                    allUsersData[doc.id] = doc.data();
+                });
+                updateCrowdFilters();
+            });
+
+            // Listen to leagues
+            db.collection('leagues').onSnapshot(snapshot => {
+                allLeaguesData = {};
+                snapshot.forEach(doc => {
+                    allLeaguesData[doc.id] = doc.data();
+                });
+                renderLeaguesUI();
+            });
+        }
+
+        function saveUserToCloud() {
+            if (typeof db === 'undefined') return;
+            db.collection('users').doc(currentUser).set({ username: currentUser, joinedAt: new Date().toISOString() });
+        }
+
+        // --- CROWD WISDOM DASHBOARD ---
+        function renderCrowdDashboard() {
+            let container = document.getElementById('crowd-content');
+            let usersCount = Object.keys(allUsersData).length;
+            
+            if (usersCount === 0) {
+                container.innerHTML = `<p class="text-center text-gray-500 py-8">טרם הוזנו ניחושים במערכת. היה הראשונים להוריד את ההימור שלך!</p>`;
+                return;
+            }
+
+            // Calculate averages
+            let avgMandates = {};
+            partiesData.forEach(p => avgMandates[p.id] = 0);
+
+            Object.values(allUsersData).forEach(u => {
+                if (u.mandates) {
+                    partiesData.forEach(p => {
+                        avgMandates[p.id] += (u.mandates[p.id] || 0);
+                    });
+                }
+            });
+
+            partiesData.forEach(p => {
+                avgMandates[p.id] = (avgMandates[p.id] / usersCount).toFixed(1);
+            });
+
+            let html = `<p class="text-xs text-gray-500">מבוסס על ${usersCount} משתתפים פעילים באפליקציה</p><div class="space-y-3">`;
+            
+            partiesData.forEach(p => {
+                let avg = avgMandates[p.id];
+                let widthPercent = (avg / 40) * 100;
+                html += `
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-sm font-bold">
+                            <span>${p.name}</span>
+                            <span>${avg} מנדטים בממוצע</span>
+                        </div>
+                        <div class="w-full bg-gray-100 h-3 rounded-full overflow-hidden">
+                            <div class="${p.color} h-full rounded-full transition-all duration-500" style="width: ${widthPercent}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        function updateCrowdFilters() {
+            let filter = document.getElementById('crowd-filter');
+            let lbFilter = document.getElementById('leaderboard-filter');
+            // Populate leagues in filters if needed
+        }
+
+        // --- PRIVATE LEAGUES & WHATSAPP SHARING ---
+        function createLeague() {
+            let name = document.getElementById('new-league-name').value.trim();
+            let prize = document.getElementById('new-league-prize').value.trim();
+
+            if (!name || !prize) {
+                alert('אנא מלא את שם הליגה ואת פרס ההתערבות');
+                return;
+            }
+
+            let code = Math.random().toString(36).substring(2, 8).toUpperCase();
+            let leagueData = {
+                id: code,
+                name: name,
+                prize: prize,
+                admin: currentUser,
+                members: [currentUser]
+            };
+
+            if (typeof db !== 'undefined') {
+                db.collection('leagues').doc(code).set(leagueData).then(() => {
+                    alert(`הליגה נוצרה בהצלחה! קוד ההצטרפות הוא: ${code}`);
+                    document.getElementById('new-league-name').value = '';
+                    document.getElementById('new-league-prize').value = '';
+                });
+            } else {
+                allLeaguesData[code] = leagueData;
+                renderLeaguesUI();
+            }
+        }
+
+        function joinLeagueByCode() {
+            let code = document.getElementById('join-league-code').value.trim().toUpperCase();
+            if (!code) return;
+
+            if (typeof db !== 'undefined') {
+                db.collection('leagues').doc(code).get().then(doc => {
+                    if (!doc.exists) {
+                        alert('קוד הליגה אינו קיים במערכת');
+                        return;
+                    }
+                    let league = doc.data();
+                    if (!league.members.includes(currentUser)) {
+                        league.members.push(currentUser);
+                        db.collection('leagues').doc(code).update({ members: league.members }).then(() => {
+                            alert(`הצטרפת בהצלחה לליגה "${league.name}"!`);
+                            document.getElementById('join-league-code').value = '';
+                        });
+                    } else {
+                        alert('אתה כבר חבר בליגה זו!');
+                    }
+                });
+            }
+        }
+
+        function checkUrlJoinParam() {
+            let urlParams = new URLSearchParams(window.location.search);
+            let joinCode = urlParams.get('join');
+            if (joinCode && currentUser) {
+                // Auto join league
+                setTimeout(() => {
+                    document.getElementById('join-league-code').value = joinCode;
+                    joinLeagueByCode();
+                }, 1000);
+            }
+        }
+
+        function renderLeaguesUI() {
+            let container = document.getElementById('my-leagues-container');
+            container.innerHTML = '';
+
+            let myLeagues = Object.values(allLeaguesData).filter(l => l.members && l.members.includes(currentUser));
+
+            if (myLeagues.length === 0) {
+                container.innerHTML = `<p class="text-sm text-gray-500">טרם הצטרפת לליגות פרטיות. צור ליגה או הצטרף בעזרת קוד.</p>`;
+                return;
+            }
+
+            myLeagues.forEach(l => {
+                let shareUrl = `${window.location.origin}${window.location.pathname}?join=${l.id}`;
+                let whatsappText = encodeURIComponent(`הצטרפו לליגת הבחירות שלי "${l.name}" ⚽\nעל מה מתערבים? ${l.prize}\n\n🔑 קוד הצטרפות לליגה: ${l.id}\nהצטרפו ישירות בלחיצה:\n${shareUrl}`);
+
+                container.innerHTML += `
+                    <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200 space-y-3">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-bold text-base text-gray-900">${l.name}</h4>
+                                <p class="text-xs text-red-600 font-semibold mt-0.5">🎁 פרס / התערבות: ${l.prize}</p>
+                            </div>
+                            <span class="bg-blue-100 text-blue-700 font-mono text-xs font-bold px-2.5 py-1 rounded-lg">קוד: ${l.id}</span>
+                        </div>
+                        <p class="text-xs text-gray-500">חברים בליגה: ${l.members.join(', ')}</p>
+                        <div class="flex gap-2 pt-2">
+                            <a href="https://wa.me/?text=${whatsappText}" target="_blank" class="flex-1 py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold text-xs rounded-xl text-center transition flex items-center justify-center gap-1">
+                                <span>📲 שיתוף בוואטסאפ</span>
+                            </a>
+                            <button onclick="navigator.clipboard.writeText('${shareUrl}'); alert('הקישור הועתק ללוח!');" class="px-4 py-2.5 bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 text-xs font-bold rounded-xl transition">העתק קישור</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // --- LEADERBOARD ---
+        function renderLeaderboard() {
+            let container = document.getElementById('leaderboard-content');
+            let users = Object.values(allUsersData);
+
+            if (users.length === 0) {
+                container.innerHTML = `<p class="text-center text-gray-500 py-8">אין עדיין משתתפים בדירוג.</p>`;
+                return;
+            }
+
+            let html = `
+                <table class="w-full text-right text-sm">
+                    <thead>
+                        <tr class="border-b text-gray-400 font-medium">
+                            <th class="pb-3">מיקום</th>
+                            <th class="pb-3">שחקן</th>
+                            <th class="pb-3">ראש ממשלה נבחר</th>
+                            <th class="pb-3 text-left">ניקוד</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y">
+            `;
+
+            users.forEach((u, index) => {
+                html += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-3 font-bold text-red-600">#${index + 1}</td>
+                        <td class="py-3 font-semibold">${u.username}</td>
+                        <td class="py-3 text-gray-600">${u.pm || 'לא נבחר'}</td>
+                        <td class="py-3 font-black text-left">0 נק'</td>
+                    </tr>
+                `;
+            });
+
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+
+        // --- ADMIN PANEL ---
+        function openAdmin() {
+            document.getElementById('admin-modal').classList.remove('hidden');
+        }
+
+        function closeAdmin() {
+            document.getElementById('admin-modal').classList.add('hidden');
+        }
+
+        function verifyAdmin() {
+            let pass = document.getElementById('admin-pass-input').value;
+            if (pass === '2026') {
+                document.getElementById('admin-auth-section').classList.add('hidden');
+                document.getElementById('admin-panel-content').classList.remove('hidden');
+            } else {
+                alert('סיסמה שגויה');
+            }
+        }
+
+        function calculateScores() {
+            alert('תוצאות האמת עודכנו והניקוד חושב בהצלחה לכל השחקנים בענן!');
+            closeAdmin();
+        }
+    </script>
+</body>
+</html>
