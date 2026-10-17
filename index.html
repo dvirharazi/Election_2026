@@ -137,7 +137,7 @@
         <!-- 3. PRIVATE LEAGUES TAB -->
         <section id="tab-leagues" class="hidden space-y-6">
             <div id="league-view-container" class="space-y-6">
-                <!-- Dynamically populated: Either list of leagues OR specific league view with players table -->
+                <!-- Dynamically populated -->
             </div>
         </section>
 
@@ -247,14 +247,13 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             initPartiesUI();
-            checkUrlJoinParam();
             
             if (!currentUser) {
                 document.getElementById('entry-modal').classList.remove('hidden');
             } else {
                 document.getElementById('entry-modal').classList.add('hidden');
                 document.getElementById('display-username').innerText = `שלום, ${currentUser}`;
-                loadCloudData();
+                loadCloudDataAndInit();
             }
         });
 
@@ -271,15 +270,7 @@
             document.getElementById('display-username').innerText = `שלום, ${currentUser}`;
             
             saveUserToCloud();
-            loadCloudData();
-
-            let urlParams = new URLSearchParams(window.location.search);
-            let joinCode = urlParams.get('join');
-            if (joinCode) {
-                setTimeout(() => {
-                    joinLeagueDirectly(joinCode, true);
-                }, 800);
-            }
+            loadCloudDataAndInit();
         }
 
         function changeUser() {
@@ -408,7 +399,7 @@
 
             userPM = document.getElementById('pm-select').value;
             if (!userPM) {
-                alert('אנא בחר ראש ממשלה בקטגוריה הרצויה');
+                alert('אנא בחר ראש ממשלה');
                 return;
             }
 
@@ -438,21 +429,25 @@
 
         function switchTab(tabName) {
             ['predictions', 'crowd', 'leagues', 'leaderboard'].forEach(t => {
-                document.getElementById(`tab-${t}`).classList.add('hidden');
-                document.getElementById(`tab-btn-${t}`).className = "py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm text-gray-600 hover:bg-gray-100 transition";
+                let sec = document.getElementById(`tab-${t}`);
+                let btn = document.getElementById(`tab-btn-${t}`);
+                if(sec) sec.classList.add('hidden');
+                if(btn) btn.className = "py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm text-gray-600 hover:bg-gray-100 transition";
             });
-            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
-            document.getElementById(`tab-btn-${tabName}`).className = "py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm bg-red-600 text-white transition shadow-sm";
+            
+            let targetSec = document.getElementById(`tab-${tabName}`);
+            let targetBtn = document.getElementById(`tab-btn-${tabName}`);
+            if(targetSec) targetSec.classList.remove('hidden');
+            if(targetBtn) targetBtn.className = "py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm bg-red-600 text-white transition shadow-sm";
 
             if (tabName === 'crowd') renderCrowdDashboard();
             if (tabName === 'leagues') {
-                activeLeagueViewId = null;
-                renderLeaguesUI();
+                if(!activeLeagueViewId) renderLeaguesUI();
             }
             if (tabName === 'leaderboard') renderLeaderboard();
         }
 
-        function loadCloudData() {
+        function loadCloudDataAndInit() {
             if (typeof db === 'undefined') return;
             
             db.collection('predictions').onSnapshot(snapshot => {
@@ -460,6 +455,7 @@
                 snapshot.forEach(doc => {
                     allUsersData[doc.id] = doc.data();
                 });
+                if(activeLeagueViewId) renderLeaguesUI();
             });
 
             db.collection('leagues').onSnapshot(snapshot => {
@@ -467,8 +463,20 @@
                 snapshot.forEach(doc => {
                     allLeaguesData[doc.id] = doc.data();
                 });
-                renderLeaguesUI();
+                
+                // Check URL join param once leagues are loaded
+                checkUrlJoinParamAfterLoad();
             });
+        }
+
+        function checkUrlJoinParamAfterLoad() {
+            let urlParams = new URLSearchParams(window.location.search);
+            let joinCode = urlParams.get('join');
+            if (joinCode && currentUser) {
+                // Clear the URL parameter so it doesn't loop on refresh
+                window.history.replaceState({}, document.title, window.location.pathname);
+                joinLeagueDirectly(joinCode);
+            }
         }
 
         function saveUserToCloud() {
@@ -543,11 +551,13 @@
                 db.collection('leagues').doc(code).set(leagueData).then(() => {
                     alert(`הליגה נוצרה בהצלחה! קוד ההצטרפות הוא: ${code}`);
                     activeLeagueViewId = code;
+                    switchTab('leagues');
                     renderLeaguesUI();
                 });
             } else {
                 allLeaguesData[code] = leagueData;
                 activeLeagueViewId = code;
+                switchTab('leagues');
                 renderLeaguesUI();
             }
         }
@@ -555,10 +565,10 @@
         function joinLeagueByCode() {
             let code = document.getElementById('join-league-code').value.trim().toUpperCase();
             if (!code) return;
-            joinLeagueDirectly(code, false);
+            joinLeagueDirectly(code);
         }
 
-        function joinLeagueDirectly(code, isFromUrl) {
+        function joinLeagueDirectly(code) {
             if (typeof db !== 'undefined') {
                 db.collection('leagues').doc(code).get().then(doc => {
                     if (!doc.exists) {
@@ -571,27 +581,31 @@
                         db.collection('leagues').doc(code).update({ members: league.members }).then(() => {
                             activeLeagueViewId = code;
                             switchTab('leagues');
+                            renderLeaguesUI();
                         });
                     } else {
                         activeLeagueViewId = code;
                         switchTab('leagues');
+                        renderLeaguesUI();
                     }
                 });
-            }
-        }
-
-        function checkUrlJoinParam() {
-            let urlParams = new URLSearchParams(window.location.search);
-            let joinCode = urlParams.get('join');
-            if (joinCode && currentUser) {
-                setTimeout(() => {
-                    joinLeagueDirectly(joinCode, true);
-                }, 1000);
+            } else {
+                if (allLeaguesData[code]) {
+                    if (!allLeaguesData[code].members.includes(currentUser)) {
+                        allLeaguesData[code].members.push(currentUser);
+                    }
+                    activeLeagueViewId = code;
+                    switchTab('leagues');
+                    renderLeaguesUI();
+                } else {
+                    alert('קוד הליגה אינו קיים');
+                }
             }
         }
 
         function renderLeaguesUI() {
             let container = document.getElementById('league-view-container');
+            if(!container) return;
             container.innerHTML = '';
 
             // If viewing a specific league
