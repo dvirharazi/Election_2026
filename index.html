@@ -70,7 +70,7 @@
                     </h2>
                     <button onclick="resetMandates()" class="text-xs text-red-600 hover:underline">איפוס טופס</button>
                 </div>
-                <p class="text-xs text-gray-500">הקלד חופשי את מספר המנדטים (מפלגה שעוברת מקבלת לפחות 4 מנדטים, או 0 אם אינה עוברת).</p>
+                <p class="text-xs text-gray-500">הקלד חופשי את מספר המנדטים לכל מפלגה.</p>
                 
                 <div id="parties-list" class="space-y-3">
                     <!-- Dynamic Parties Loaded Here -->
@@ -356,7 +356,8 @@
         function calcTotalMandates() {
             let total = 0;
             partiesData.forEach(p => {
-                let val = parseInt(document.getElementById(`mandate-${p.id}`).value) || 0;
+                let input = document.getElementById(`mandate-${p.id}`);
+                let val = parseInt(input.value) || 0;
                 total += val;
                 userPredictions[p.id] = val;
             });
