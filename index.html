@@ -476,7 +476,7 @@
 
                 if(coalitionContainer) {
                     coalitionContainer.innerHTML += `
-                        <div id="coalition-card-${p.id}" onclick="toggleCoalition('${p.id}')" class="p-3 border border-gray-200 rounded-xl cursor-pointer text-center transition bg-white hover:border-red-500 flex flex-col items-center gap-1.5">
+                        <div id="coalition-card-${p.id}" onclick="toggleCoalition('${p.id}')" class="p-3 border border-gray-200 rounded-xl cursor-pointer text-center transition bg-white hover:border-green-500 flex flex-col items-center gap-1.5">
                             ${partyBadge(p, 'w-16 h-11', 'text-xs font-bold', 'rounded-lg')}
                             <span class="font-bold text-xs block leading-tight break-words max-w-full">${p.name}</span>
                         </div>
@@ -608,9 +608,9 @@
                 let card = document.getElementById(`coalition-card-${p.id}`);
                 if(card) {
                     if (userCoalition.includes(p.id)) {
-                        card.className = "p-3 border-2 border-red-600 bg-red-50 rounded-xl cursor-pointer text-center transition shadow-sm flex flex-col items-center gap-1.5";
+                        card.className = "p-3 border-2 border-green-600 bg-green-50 rounded-xl cursor-pointer text-center transition shadow-sm flex flex-col items-center gap-1.5";
                     } else {
-                        card.className = "p-3 border border-gray-200 bg-white rounded-xl cursor-pointer text-center transition hover:border-red-300 flex flex-col items-center gap-1.5";
+                        card.className = "p-3 border border-gray-200 bg-white rounded-xl cursor-pointer text-center transition hover:border-green-400 flex flex-col items-center gap-1.5";
                     }
                 }
             });
