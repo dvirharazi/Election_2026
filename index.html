@@ -841,8 +841,7 @@
             calcTotalMandates();
         }
 
-        // Every party must get at least MIN_MANDATES (electoral threshold). A box turns red once the user touched it
-        // (or after a failed save), so a fresh empty form is not all red.
+        // A party gets either 0 seats (below the threshold) or at least MIN_MANDATES. 1-3 seats turns the box red and blocks saving.
         const MIN_MANDATES = 4;
         const touchedParties = new Set();
         let showAllMinErrors = false;
@@ -852,7 +851,7 @@
                 let input = document.getElementById(`mandate-${p.id}`);
                 if (!input) return;
                 let val = parseInt(input.value) || 0;
-                let bad = val < MIN_MANDATES && (showAllMinErrors || touchedParties.has(p.id) || val > 0);
+                let bad = val > 0 && val < MIN_MANDATES;   // 0 is allowed (party below the threshold)
                 input.classList.toggle('bg-red-100', bad);
                 input.classList.toggle('border-red-500', bad);
                 input.classList.toggle('text-red-700', bad);
@@ -958,14 +957,15 @@
 
             let tooFew = partiesData.filter(p => {
                 let input = document.getElementById(`mandate-${p.id}`);
-                return input && (parseInt(input.value) || 0) < MIN_MANDATES;
+                let v = input ? (parseInt(input.value) || 0) : 0;
+                return v > 0 && v < MIN_MANDATES;
             });
             if (tooFew.length) {
                 showAllMinErrors = true;
                 markMinMandates();
                 let first = document.getElementById(`mandate-${tooFew[0].id}`);
                 if (first && first.scrollIntoView) first.scrollIntoView({ block: 'center', behavior: 'smooth' });
-                let lines = tooFew.map(p => `שמת ל${p.name} ${parseInt(document.getElementById('mandate-' + p.id).value) || 0} מנדטים - מינימום ${MIN_MANDATES}`);
+                let lines = tooFew.map(p => `שמת ל${p.name} ${parseInt(document.getElementById('mandate-' + p.id).value) || 0} מנדטים - אפשר 0 או ${MIN_MANDATES} ומעלה`);
                 alert('לא ניתן לשלוח:\n' + lines.join('\n') + '\nתקנו את המפלגות המסומנות באדום ונסו שוב.');
                 return;
             }
