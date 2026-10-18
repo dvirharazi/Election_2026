@@ -30,6 +30,13 @@
                 <button onclick="changeUser()" class="text-xs bg-white/20 hover:bg-white/30 px-2 py-1 rounded transition">החלף משתמש</button>
             </div>
         </div>
+        <!-- Betting countdown -->
+        <div id="bet-countdown-bar" class="bg-red-800/70 text-white">
+            <div class="max-w-4xl mx-auto px-4 py-1.5 flex items-center justify-center gap-2 flex-wrap text-xs sm:text-sm font-bold">
+                <span id="bet-countdown-label">⏳ ההימורים נסגרים בעוד</span>
+                <span id="bet-countdown-time" class="flex items-center gap-2 font-black bg-black/15 rounded-md px-2 py-0.5"></span>
+            </div>
+        </div>
     </header>
 
     <!-- Main Navigation Tabs -->
@@ -51,6 +58,10 @@
         <!-- 1. PREDICTIONS TAB -->
         <section id="tab-predictions" class="space-y-6">
 
+            <div id="betting-closed-notice" class="hidden bg-gray-800 text-white rounded-2xl p-4 text-sm font-bold text-center">
+                🔒 ההימורים נסגרו. לא ניתן עוד לשנות או לשמור הימורים – עקבו אחרי התוצאות בלשונית "מובילים ודירוג".
+            </div>
+
             <!-- Step A: Mandates Form -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
                 <div class="flex justify-between items-center border-b pb-3">
@@ -60,7 +71,7 @@
                     </h2>
                     <button onclick="resetMandates()" class="text-xs text-red-600 hover:underline">איפוס טופס</button>
                 </div>
-                <p class="text-xs text-gray-500">ניתן לעדכן את ההימור שלך מתי שתרצה ולשמור מחדש!</p>
+                <p class="text-xs text-gray-500">ניתן לעדכן את ההימור ולשמור מחדש עד סגירת ההימורים – ביום הבחירות (27.10.2026) בשעה 22:00.</p>
                 
                 <div id="parties-list" class="space-y-3">
                     <!-- Dynamic Parties Loaded Here -->
@@ -350,6 +361,73 @@
             return `<span class="inline-flex items-center gap-2">${partyBadge(p, 'w-12 h-8', 'text-xs font-bold', 'rounded-md')}<span>${pm}</span></span>`;
         }
 
+        // ---------- Betting deadline: election day 27.10.2026, 22:00 Israel time (UTC+2 on that date) ----------
+        const BET_DEADLINE_MS = Date.parse('2026-10-27T22:00:00+02:00');
+        const BET_DEADLINE_TEXT = 'ביום הבחירות (27.10.2026) בשעה 22:00';
+        let serverOffsetMs = 0;   // server time minus device time, so a wrong phone clock can't extend betting
+
+        async function syncServerTime() {
+            try {
+                const t0 = Date.now();
+                const res = await fetch(location.pathname || '/', { method: 'HEAD', cache: 'no-store' });
+                const t1 = Date.now();
+                const header = res.headers.get('date');
+                if (header) {
+                    const serverMs = Date.parse(header);
+                    if (!isNaN(serverMs)) serverOffsetMs = serverMs + (t1 - t0) / 2 - t1;
+                }
+            } catch (e) { /* offline or opened as a local file - fall back to the device clock */ }
+        }
+
+        function nowMs() { return Date.now() + serverOffsetMs; }
+        function isBettingClosed() { return nowMs() >= BET_DEADLINE_MS; }
+        function betClosedAlert() { alert('ההימורים נסגרו ' + BET_DEADLINE_TEXT + '. לא ניתן עוד לשנות או לשמור הימורים.'); }
+
+        function applyBettingLock() {
+            const closed = isBettingClosed();
+            const notice = document.getElementById('betting-closed-notice');
+            if (notice) notice.classList.toggle('hidden', !closed);
+            if (!closed) return;
+            const sec = document.getElementById('tab-predictions');
+            if (!sec) return;
+            sec.querySelectorAll('input, select, button').forEach(el => { el.disabled = true; });
+            sec.querySelectorAll('[id^="coalition-card-"]').forEach(c => c.classList.add('pointer-events-none'));
+            sec.querySelectorAll('#parties-list, #coalition-picker').forEach(c => c.classList.add('opacity-60'));
+            const saveBtn = sec.querySelector('button[onclick="saveUserPredictions()"]');
+            if (saveBtn) saveBtn.innerHTML = '<span>🔒 ההימורים נסגרו</span>';
+        }
+
+        function renderBetCountdown() {
+            const bar = document.getElementById('bet-countdown-bar');
+            const label = document.getElementById('bet-countdown-label');
+            const time = document.getElementById('bet-countdown-time');
+            if (!bar || !label || !time) return;
+            const left = BET_DEADLINE_MS - nowMs();
+            if (left <= 0) {
+                bar.className = 'bg-gray-800 text-white';
+                label.textContent = '🔒 ההימורים נסגרו';
+                time.innerHTML = '';
+                time.classList.add('hidden');
+                applyBettingLock();
+                return;
+            }
+            time.classList.remove('hidden');
+            const s = Math.floor(left / 1000);
+            const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+            const pad = n => String(n).padStart(2, '0');
+            time.innerHTML = (d > 0 ? `<span>${d} ${d === 1 ? 'יום' : 'ימים'}</span>` : '') +
+                `<span dir="ltr" class="tabular-nums">${pad(h)}:${pad(m)}:${pad(sec)}</span>`;
+            label.textContent = '⏳ ההימורים נסגרים בעוד';
+            bar.className = left < 3600 * 1000 ? 'bg-amber-400 text-gray-900' : 'bg-red-800/70 text-white';
+        }
+
+        function startBetCountdown() {
+            renderBetCountdown();
+            syncServerTime().then(renderBetCountdown);
+            setInterval(renderBetCountdown, 1000);
+            setInterval(syncServerTime, 10 * 60 * 1000);
+        }
+
         // Logo preview under the PM dropdown in the bet form
         function updatePmPreview() {
             const sel = document.getElementById('pm-select');
@@ -377,6 +455,7 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             initPartiesUI();
+            startBetCountdown();
             
             if (!currentUser || !currentPin) {
                 document.getElementById('entry-modal').classList.remove('hidden');
@@ -497,6 +576,7 @@
             });
             calcTotalMandates();
             renderCoalitionUI();
+            applyBettingLock();
         }
 
         function loadUserExistingPredictions() {
@@ -524,6 +604,7 @@
         }
 
         function updateMandate(partyId, change) {
+            if (isBettingClosed()) return;
             let input = document.getElementById(`mandate-${partyId}`);
             if(!input) return;
             let val = parseInt(input.value) || 0;
@@ -584,6 +665,7 @@
         }
 
         function resetMandates() {
+            if (isBettingClosed()) return;
             partiesData.forEach(p => {
                 let input = document.getElementById(`mandate-${p.id}`);
                 if(input) input.value = 0;
@@ -594,6 +676,7 @@
         }
 
         function toggleCoalition(partyId) {
+            if (isBettingClosed()) return;
             let index = userCoalition.indexOf(partyId);
             if (index > -1) {
                 userCoalition.splice(index, 1);
@@ -617,7 +700,9 @@
             updateCoalitionTotal();
         }
 
-        function saveUserPredictions() {
+        async function saveUserPredictions() {
+            await syncServerTime();   // re-check against server time right before saving
+            if (isBettingClosed()) { applyBettingLock(); betClosedAlert(); return; }
             let total = 0;
             partiesData.forEach(p => {
                 let input = document.getElementById(`mandate-${p.id}`);
