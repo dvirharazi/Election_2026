@@ -27,6 +27,7 @@
             </div>
             <div id="user-info" class="flex items-center gap-2 bg-red-700/80 px-3 py-1.5 rounded-full text-sm">
                 <span id="display-username" class="font-bold"></span>
+                <button onclick="renameUser()" class="text-xs bg-white/20 hover:bg-white/30 px-2 py-1 rounded transition">✏️ שנה שם</button>
                 <button onclick="changeUser()" class="text-xs bg-white/20 hover:bg-white/30 px-2 py-1 rounded transition">החלף משתמש</button>
             </div>
         </div>
@@ -362,7 +363,7 @@
             { id: 'religious_zionism', name: 'הציונות הדתית - זהות', leader: 'בצלאל סמוטריץ\'', symbol: 'טז', color: 'bg-blue-800', badgeColor: 'bg-blue-100 text-blue-800' },
             { id: 'noam', name: 'נעם', leader: 'אבי מעוז', symbol: 'נ', color: 'bg-emerald-700', badgeColor: 'bg-emerald-100 text-emerald-700' },
             { id: 'miluimnikim', name: 'המילואימניקים', leader: 'תנועת המילואימניקים', symbol: 'מיל', color: 'bg-stone-700', badgeColor: 'bg-stone-100 text-stone-700' },
-            { id: 'am_yisrael', name: 'עמך ישראל', leader: 'תנועה חברתית', symbol: 'עם', color: 'bg-teal-600', badgeColor: 'bg-teal-100 text-teal-700' },
+            { id: 'am_yisrael', name: 'עמך ישראל', leader: 'עובר וינטר', symbol: 'עם', color: 'bg-teal-600', badgeColor: 'bg-teal-100 text-teal-700' },
             { id: 'raam', name: 'רע"מ', leader: 'מנסור עבאס', symbol: 'עם', color: 'bg-emerald-600', badgeColor: 'bg-emerald-100 text-emerald-600' },
             { id: 'joint_list', name: 'הרשימה המשותפת', leader: 'חד"ש · תע"ל · בל"ד', symbol: 'מש', color: 'bg-red-700', badgeColor: 'bg-red-100 text-red-800' }
         ];
@@ -699,6 +700,49 @@
             }
         }
 
+        async function renameUser() {
+            if (!currentUser) return;
+            let input = prompt('הכניסו שם משתמש חדש:', currentUser);
+            if (input === null) return;
+            let newName = input.trim();
+            if (!newName || newName === currentUser) return;
+            if (newName.indexOf('/') !== -1 || newName.length > 40) { alert('שם לא תקין (עד 40 תווים, ללא "/")'); return; }
+            if (!db) { alert('אין חיבור למסד הנתונים'); return; }
+            let oldName = currentUser;
+            try {
+                let taken = await db.collection('users').doc(newName).get();
+                if (taken.exists) { alert('השם הזה כבר תפוס. בחרו שם אחר.'); return; }
+                let userDoc = await db.collection('users').doc(oldName).get();
+                let predDoc = await db.collection('predictions').doc(oldName).get();
+                let leaguesSnap = await db.collection('leagues').get();
+
+                let batch = db.batch();
+                batch.set(db.collection('users').doc(newName), Object.assign({}, userDoc.exists ? userDoc.data() : { joinedAt: new Date().toISOString() }, { username: newName, pin: currentPin }));
+                if (predDoc.exists) batch.set(db.collection('predictions').doc(newName), Object.assign({}, predDoc.data(), { username: newName }));
+                leaguesSnap.forEach(d => {
+                    let l = d.data();
+                    let inMembers = Array.isArray(l.members) && l.members.includes(oldName);
+                    let isAdmin = l.admin === oldName;
+                    if (inMembers || isAdmin) {
+                        let upd = {};
+                        if (inMembers) upd.members = l.members.map(m => m === oldName ? newName : m);
+                        if (isAdmin) upd.admin = newName;
+                        batch.update(d.ref, upd);
+                    }
+                });
+                batch.delete(db.collection('users').doc(oldName));
+                if (predDoc.exists) batch.delete(db.collection('predictions').doc(oldName));
+                await batch.commit();
+
+                localStorage.setItem('election_username', newName);
+                alert('שם המשתמש שונה בהצלחה ל-' + newName);
+                location.reload();
+            } catch (e) {
+                console.error(e);
+                alert('שינוי השם נכשל, נסו שוב.');
+            }
+        }
+
         function changeUser() {
             localStorage.removeItem('election_username');
             localStorage.removeItem('election_pin');
@@ -727,7 +771,7 @@
                             </div>
                             <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 mr-auto">
                                 <button onclick="updateMandate('${p.id}', -1)" class="w-8 h-8 shrink-0 bg-white border rounded-lg font-bold text-gray-600 shadow-sm">-</button>
-                                <input type="number" id="mandate-${p.id}" value="0" min="0" max="120" oninput="calcTotalMandates()" class="w-10 sm:w-14 text-center font-bold p-1.5 bg-white border rounded-lg text-sm">
+                                <input type="number" id="mandate-${p.id}" value="0" min="0" max="120" oninput="touchedParties.add('${p.id}'); calcTotalMandates()" class="w-10 sm:w-14 text-center font-bold p-1.5 bg-white border rounded-lg text-sm">
                                 <button onclick="updateMandate('${p.id}', 1)" class="w-8 h-8 shrink-0 bg-white border rounded-lg font-bold text-gray-600 shadow-sm">+</button>
                             </div>
                         </div>
@@ -793,7 +837,27 @@
             let newVal = val + change;
             if (newVal < 0) newVal = 0;
             input.value = newVal;
+            touchedParties.add(partyId);
             calcTotalMandates();
+        }
+
+        // Every party must get at least MIN_MANDATES (electoral threshold). A box turns red once the user touched it
+        // (or after a failed save), so a fresh empty form is not all red.
+        const MIN_MANDATES = 4;
+        const touchedParties = new Set();
+        let showAllMinErrors = false;
+
+        function markMinMandates() {
+            partiesData.forEach(p => {
+                let input = document.getElementById(`mandate-${p.id}`);
+                if (!input) return;
+                let val = parseInt(input.value) || 0;
+                let bad = val < MIN_MANDATES && (showAllMinErrors || touchedParties.has(p.id) || val > 0);
+                input.classList.toggle('bg-red-100', bad);
+                input.classList.toggle('border-red-500', bad);
+                input.classList.toggle('text-red-700', bad);
+                input.classList.toggle('bg-white', !bad);
+            });
         }
 
         function calcTotalMandates() {
@@ -806,6 +870,7 @@
                     userPredictions[p.id] = val;
                 }
             });
+            markMinMandates();
 
             let counterBox = document.getElementById('mandate-counter-box');
             if(!counterBox) return;
@@ -890,6 +955,20 @@
                 let input = document.getElementById(`mandate-${p.id}`);
                 if(input) total += parseInt(input.value) || 0;
             });
+
+            let tooFew = partiesData.filter(p => {
+                let input = document.getElementById(`mandate-${p.id}`);
+                return input && (parseInt(input.value) || 0) < MIN_MANDATES;
+            });
+            if (tooFew.length) {
+                showAllMinErrors = true;
+                markMinMandates();
+                let first = document.getElementById(`mandate-${tooFew[0].id}`);
+                if (first && first.scrollIntoView) first.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                let lines = tooFew.map(p => `שמת ל${p.name} ${parseInt(document.getElementById('mandate-' + p.id).value) || 0} מנדטים - מינימום ${MIN_MANDATES}`);
+                alert('לא ניתן לשלוח:\n' + lines.join('\n') + '\nתקנו את המפלגות המסומנות באדום ונסו שוב.');
+                return;
+            }
 
             if (total !== 120) {
                 alert(`חובה לחלק בדיוק 120 מנדטים! כרגע מחולקים ${total} מנדטים.`);
