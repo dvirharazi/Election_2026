@@ -87,7 +87,7 @@
 
                 <div class="pt-3 border-t">
                     <label class="block text-sm font-semibold mb-2">מי יהיה ראש הממשלה הבא?</label>
-                    <select id="pm-select" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <select id="pm-select" onchange="updatePmPreview()" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-red-500">
                         <option value="">בחר ראש ממשלה...</option>
                         <option value="בנימין נתניהו">בנימין נתניהו (הליכוד)</option>
                         <option value="גדי איזנקוט">גדי איזנקוט (ישר!)</option>
@@ -100,6 +100,7 @@
                         <option value="סבב בחירות נוסף">סבב בחירות נוסף (בחירות חוזרות)</option>
                         <option value="רוטציה / ממשלת מעבר">רוטציה / ממשלת מעבר / ללא הכרעה</option>
                     </select>
+                    <div id="pm-logo-preview" class="hidden mt-3 p-2 bg-gray-50 border border-gray-100 rounded-xl flex items-center gap-3"></div>
                 </div>
             </div>
 
@@ -282,6 +283,67 @@
             { id: 'balad', name: 'בל"ד', leader: 'סמי אבו שחאדה', symbol: 'ד', color: 'bg-purple-700', badgeColor: 'bg-purple-100 text-purple-700' }
         ];
 
+        // ---------- Party logos (files live in /images) ----------
+        const LOGO_DIR = 'images/';
+        const partyLogos = {
+            likud: 'הליכוד.png',
+            yeshar: 'ישר עם איזנקוט.png',
+            beyachad: 'ביחד בראשות בנט.png',
+            democrats: 'הדמוקרטים.png',
+            shas: 'שס.png',
+            otzma: 'עוצמה יהודית.png',
+            israel_beiteinu: 'ישראל ביתנו.png',
+            yahadut_hatorah: 'יהדות התורה.png',
+            religious_zionism: 'הציונות הדתית.png',
+            miluimnikim: 'המילואימניקים והכלכלית.png',
+            am_yisrael: 'עמך ישראל.png',
+            raam: 'רעם.png',
+            hadash_taal: 'הרשימה המשותפת.png',
+            balad: 'הרשימה המשותפת.png'
+            // noam: no logo yet - falls back to the letter badge
+        };
+
+        function logoUrl(p) {
+            const f = partyLogos[p.id];
+            return f ? LOGO_DIR + encodeURIComponent(f) : null;
+        }
+
+        function partyFallback(id, sizeClass, textClass, roundClass) {
+            const p = partiesData.find(x => x.id === id);
+            if (!p) return '';
+            return `<div class="${sizeClass} ${roundClass} ${p.badgeColor} ${textClass} flex items-center justify-center shrink-0">${p.symbol}</div>`;
+        }
+
+        // Logo badge for a party (falls back to the old letter badge when there is no logo or it fails to load)
+        function partyBadge(p, sizeClass, textClass, roundClass) {
+            const url = logoUrl(p);
+            if (!url) return partyFallback(p.id, sizeClass, textClass, roundClass);
+            return `<div class="${sizeClass} ${roundClass} bg-white border border-gray-100 shadow-sm flex items-center justify-center overflow-hidden p-0.5 shrink-0"><img src="${url}" alt="${p.name}" title="${p.name}" loading="lazy" class="max-w-full max-h-full object-contain" onerror="this.parentElement.outerHTML=partyFallback('${p.id}','${sizeClass}','${textClass}','${roundClass}')"></div>`;
+        }
+
+        // Prime-minister cell: logo of the PM's party + the name. Non-party choices (rotation, new election) stay text-only.
+        function pmCell(pm) {
+            if (!pm) return 'לא נבחר';
+            const p = partiesData.find(x => x.leader === pm);
+            if (!p || !logoUrl(p)) return pm;
+            return `<span class="inline-flex items-center gap-2">${partyBadge(p, 'w-12 h-8', 'text-xs font-bold', 'rounded-md')}<span>${pm}</span></span>`;
+        }
+
+        // Logo preview under the PM dropdown in the bet form
+        function updatePmPreview() {
+            const sel = document.getElementById('pm-select');
+            const box = document.getElementById('pm-logo-preview');
+            if (!sel || !box) return;
+            const p = partiesData.find(x => x.leader === sel.value);
+            if (p && logoUrl(p)) {
+                box.innerHTML = partyBadge(p, 'w-20 h-14', 'text-base font-black', 'rounded-xl') + `<span class="font-bold text-sm">${p.name}</span>`;
+                box.classList.remove('hidden');
+            } else {
+                box.innerHTML = '';
+                box.classList.add('hidden');
+            }
+        }
+
         let currentUser = localStorage.getItem('election_username') || null;
         let currentPin = localStorage.getItem('election_pin') || null;
         let userPredictions = {};
@@ -376,7 +438,7 @@
                     container.innerHTML += `
                         <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 gap-2">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl ${p.badgeColor} font-black flex items-center justify-center text-sm shadow-sm">${p.symbol}</div>
+                                ${partyBadge(p, 'w-20 h-14', 'text-sm font-black', 'rounded-xl')}
                                 <div>
                                     <span class="font-bold text-sm block">${p.name}</span>
                                     <span class="text-xs text-gray-400">${p.leader}</span>
@@ -394,7 +456,7 @@
                 if(coalitionContainer) {
                     coalitionContainer.innerHTML += `
                         <div id="coalition-card-${p.id}" onclick="toggleCoalition('${p.id}')" class="p-3 border border-gray-200 rounded-xl cursor-pointer text-center transition bg-white hover:border-red-500 flex flex-col items-center gap-1.5">
-                            <div class="w-8 h-8 rounded-lg ${p.badgeColor} font-bold flex items-center justify-center text-xs">${p.symbol}</div>
+                            ${partyBadge(p, 'w-16 h-11', 'text-xs font-bold', 'rounded-lg')}
                             <span class="font-bold text-xs block">${p.name}</span>
                         </div>
                     `;
@@ -404,7 +466,7 @@
                     adminContainer.innerHTML += `
                         <div class="flex justify-between items-center bg-gray-50 p-2 rounded-lg text-sm">
                             <div class="flex items-center gap-2">
-                                <div class="w-6 h-6 rounded-md ${p.badgeColor} font-bold flex items-center justify-center text-xs">${p.symbol}</div>
+                                ${partyBadge(p, 'w-12 h-8', 'text-xs font-bold', 'rounded-md')}
                                 <span>${p.name}</span>
                             </div>
                             <input type="number" id="admin-actual-${p.id}" value="0" oninput="calcAdminActualTotal()" class="w-16 p-1 text-center border rounded-lg font-bold">
@@ -434,6 +496,7 @@
                     userPM = uData.pm;
                     let pmSelect = document.getElementById('pm-select');
                     if(pmSelect) pmSelect.value = userPM;
+                    updatePmPreview();
                 }
                 calcTotalMandates();
             }
@@ -713,7 +776,7 @@
                     <div class="space-y-1">
                         <div class="flex justify-between items-center text-sm font-bold">
                             <div class="flex items-center gap-2">
-                                <div class="w-6 h-6 rounded-md ${p.badgeColor} font-bold flex items-center justify-center text-xs">${p.symbol}</div>
+                                ${partyBadge(p, 'w-12 h-8', 'text-xs font-bold', 'rounded-md')}
                                 <span>${p.name}</span>
                             </div>
                             <span>${mandates} מנדטים בממוצע</span>
@@ -830,7 +893,7 @@
                             <td class="py-3 font-semibold">
                                 <button onclick="viewUserPrediction('${m}')" class="text-blue-600 hover:underline font-bold text-right">${m} 👁️</button>
                             </td>
-                            <td class="py-3 text-gray-600">${userPred ? (userPred.pm || 'לא נבחר') : 'טרם הימר'}</td>
+                            <td class="py-3 text-gray-600">${userPred ? pmCell(userPred.pm) : 'טרם הימר'}</td>
                             <td class="py-3 font-black text-left">${userScore} נק'</td>
                         </tr>
                     `;
@@ -959,7 +1022,7 @@
                 let html = `
                     <div class="bg-gray-50 p-3 rounded-xl mb-3">
                         <span class="block text-xs text-gray-500">ראש ממשלה נבחר:</span>
-                        <span class="font-black text-red-600 text-base">${uData.pm || 'לא נבחר'}</span>
+                        <span class="font-black text-red-600 text-base">${pmCell(uData.pm)}</span>
                     </div>
                     <div class="space-y-1.5 max-h-60 overflow-y-auto border p-2 rounded-xl">
                 `;
@@ -969,7 +1032,7 @@
                         html += `
                             <div class="flex justify-between items-center bg-white p-2 rounded-lg border text-xs">
                                 <div class="flex items-center gap-2">
-                                    <div class="w-6 h-6 rounded-md ${p.badgeColor} font-bold flex items-center justify-center text-xs">${p.symbol}</div>
+                                    ${partyBadge(p, 'w-12 h-8', 'text-xs font-bold', 'rounded-md')}
                                     <span class="font-bold">${p.name}</span>
                                 </div>
                                 <span class="font-black text-blue-600">${mandates} מנדטים</span>
@@ -1020,7 +1083,7 @@
                     <tr class="hover:bg-gray-50">
                         <td class="py-3 font-bold text-red-600">#${index + 1}</td>
                         <td class="py-3 font-semibold">${u.username}</td>
-                        <td class="py-3 text-gray-600">${u.pm || 'לא נבחר'}</td>
+                        <td class="py-3 text-gray-600">${pmCell(u.pm)}</td>
                         <td class="py-3 font-black text-left">${userScore} נק'</td>
                     </tr>
                 `;
