@@ -41,11 +41,12 @@
 
     <!-- Main Navigation Tabs -->
     <nav class="max-w-4xl mx-auto px-4 mt-4">
-        <div class="grid grid-cols-4 gap-2 bg-white p-2 rounded-2xl shadow-sm border border-gray-100 text-center">
-            <button onclick="switchTab('predictions')" id="tab-btn-predictions" class="py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm bg-red-600 text-white transition shadow-sm">טופס ניחושים</button>
-            <button onclick="switchTab('crowd')" id="tab-btn-crowd" class="py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm text-gray-600 hover:bg-gray-100 transition">חוכמת ההמונים</button>
-            <button onclick="switchTab('leagues')" id="tab-btn-leagues" class="py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm text-gray-600 hover:bg-gray-100 transition">ליגות פרטיות</button>
-            <button onclick="switchTab('leaderboard')" id="tab-btn-leaderboard" class="py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm text-gray-600 hover:bg-gray-100 transition">מובילים ודירוג</button>
+        <div class="grid grid-cols-5 gap-1 sm:gap-2 bg-white p-1.5 sm:p-2 rounded-2xl shadow-sm border border-gray-100 text-center">
+            <button onclick="switchTab('predictions')" id="tab-btn-predictions" class="py-2.5 px-1 sm:px-2 rounded-xl font-bold text-[11px] sm:text-sm leading-tight bg-red-600 text-white transition shadow-sm">טופס ניחושים</button>
+            <button onclick="switchTab('crowd')" id="tab-btn-crowd" class="py-2.5 px-1 sm:px-2 rounded-xl font-bold text-[11px] sm:text-sm leading-tight text-gray-600 hover:bg-gray-100 transition">חוכמת ההמונים</button>
+            <button onclick="switchTab('leagues')" id="tab-btn-leagues" class="py-2.5 px-1 sm:px-2 rounded-xl font-bold text-[11px] sm:text-sm leading-tight text-gray-600 hover:bg-gray-100 transition">ליגות פרטיות</button>
+            <button onclick="switchTab('leaderboard')" id="tab-btn-leaderboard" class="py-2.5 px-1 sm:px-2 rounded-xl font-bold text-[11px] sm:text-sm leading-tight text-gray-600 hover:bg-gray-100 transition">מובילים ודירוג</button>
+            <button onclick="switchTab('scoring')" id="tab-btn-scoring" class="py-2.5 px-1 sm:px-2 rounded-xl font-bold text-[11px] sm:text-sm text-gray-600 hover:bg-gray-100 transition leading-tight">📖 שיטת הניקוד</button>
         </div>
         <div class="flex justify-end mt-2">
             <button onclick="openAdmin()" class="text-xs text-gray-500 hover:text-red-600 flex items-center gap-1 bg-white px-3 py-1 rounded-lg shadow-sm border border-gray-100">⚙️ פאנל ניהול</button>
@@ -147,12 +148,79 @@
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
                 <div class="flex justify-between items-center flex-wrap gap-3 border-b pb-4">
                     <h2 class="font-bold text-xl">טבלת מובילים ודירוג 🎖️</h2>
-                    <span class="text-xs text-gray-500">מתעדכן אוטומטית לפי תוצאות האמת</span>
+                    <span class="text-xs text-gray-500">מתעדכן אוטומטית לפי תוצאות האמת · <button onclick="switchTab('scoring')" class="text-blue-600 hover:underline font-bold">איך מחשבים ניקוד?</button></span>
                 </div>
 
                 <div id="leaderboard-content" class="overflow-x-auto">
                     <!-- Populated via JS -->
                 </div>
+            </div>
+        </section>
+
+
+        <!-- 5. SCORING EXPLAINER TAB -->
+        <section id="tab-scoring" class="hidden space-y-6">
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
+                <h2 class="font-bold text-xl">📖 איך מחשבים את הניקוד?</h2>
+                <p class="text-sm text-gray-600 leading-relaxed">מי שצובר הכי הרבה נקודות – זוכה. הציון המקסימלי הוא <b>140 נקודות</b>: עד 120 על המנדטים, ועוד 10 על הקואליציה ו-10 על ראש הממשלה.</p>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div class="bg-blue-50 rounded-xl p-3">
+                        <div class="text-2xl">🗳️</div>
+                        <div class="font-black text-blue-700 text-lg">עד 120</div>
+                        <div class="text-xs text-gray-600">מנדטים</div>
+                    </div>
+                    <div class="bg-green-50 rounded-xl p-3">
+                        <div class="text-2xl">🤝</div>
+                        <div class="font-black text-green-700 text-lg">+10</div>
+                        <div class="text-xs text-gray-600">קואליציה</div>
+                    </div>
+                    <div class="bg-amber-50 rounded-xl p-3">
+                        <div class="text-2xl">👑</div>
+                        <div class="font-black text-amber-700 text-lg">+10</div>
+                        <div class="text-xs text-gray-600">ראש הממשלה</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
+                <h3 class="font-bold text-lg flex items-center gap-2"><span class="bg-blue-100 text-blue-700 w-7 h-7 rounded-full flex items-center justify-center text-sm">1</span> מנדטים – נקודה על כל מנדט שפגעתם</h3>
+                <p class="text-sm text-gray-600 leading-relaxed">בכל מפלגה מקבלים נקודה על כל מנדט שפגעתם בו – כלומר <b>הנמוך מבין הניחוש שלכם לבין מספר המנדטים שהיא קיבלה בפועל</b>. את הנקודות של כל המפלגות מחברים.</p>
+                <div class="bg-blue-50 text-blue-800 rounded-xl p-3 text-sm font-bold text-center">נקודות למפלגה = המינימום בין הניחוש לתוצאה בפועל</div>
+
+                <p class="text-xs text-gray-500 font-bold">דוגמאות (מספרים מומצאים להמחשה):</p>
+                <div id="scoring-examples" class="space-y-2"></div>
+
+                <div class="bg-gray-50 rounded-xl p-3 text-sm text-gray-700 space-y-1.5 leading-relaxed">
+                    <p>🎯 <b>מי שפוגע בול בכל המנדטים של כל המפלגות מקבל 120 נקודות</b> – הציון המקסימלי על המנדטים.</p>
+                    <p>⚖️ ניחוש גבוה מדי לא מזכה בנקודות נוספות, ולכן אין טעם "לנפח" מפלגה. חייבים לחלק בדיוק 120 מנדטים, אז כדאי לחלק חכם.</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
+                <h3 class="font-bold text-lg flex items-center gap-2"><span class="bg-green-100 text-green-700 w-7 h-7 rounded-full flex items-center justify-center text-sm">2</span> הרכבת הקואליציה – 10 נקודות</h3>
+                <p class="text-sm text-gray-600 leading-relaxed">אם הקואליציה שבחרתם <b>זהה בדיוק</b> לקואליציה שהוקמה בפועל – אותן מפלגות, לא יותר ולא פחות – מקבלים 10 נקודות נוספות.</p>
+                <div id="scoring-coalition-example" class="space-y-2"></div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-3">
+                <h3 class="font-bold text-lg flex items-center gap-2"><span class="bg-amber-100 text-amber-700 w-7 h-7 rounded-full flex items-center justify-center text-sm">3</span> ראש הממשלה – 10 נקודות</h3>
+                <p class="text-sm text-gray-600 leading-relaxed">אם ראש הממשלה שבחרתם הוא זה שמכהן בפועל – 10 נקודות נוספות. גם "סבב בחירות נוסף" ו"רוטציה / ממשלת מעבר" נחשבות, אם זה מה שקרה.</p>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-3">
+                <h3 class="font-bold text-lg">🧮 שחקן לדוגמה – חישוב מלא</h3>
+                <div class="space-y-1.5 text-sm">
+                    <div class="flex justify-between bg-gray-50 rounded-lg p-2.5"><span>🗳️ מנדטים (סכום כל המפלגות)</span><span class="font-black">94</span></div>
+                    <div class="flex justify-between bg-gray-50 rounded-lg p-2.5"><span>🤝 קואליציה זהה לאמת</span><span class="font-black text-green-700">+10</span></div>
+                    <div class="flex justify-between bg-gray-50 rounded-lg p-2.5"><span>👑 ראש הממשלה נכון</span><span class="font-black text-amber-700">+10</span></div>
+                    <div class="flex justify-between bg-gray-900 text-white rounded-lg p-3 font-black"><span>סה״כ</span><span>114 נקודות</span></div>
+                </div>
+            </div>
+
+            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 space-y-2 text-sm text-amber-900 leading-relaxed">
+                <p>⏰ <b>ההימורים נסגרים ביום הבחירות (27.10.2026) בשעה 22:00.</b> עד אז אפשר לעדכן ולשמור מחדש.</p>
+                <p>📊 הניקוד על המנדטים מחושב אחרי פרסום התוצאות הסופיות. הבונוסים על הקואליציה ועל ראש הממשלה מתווספים כשהם נקבעים בפועל – עד אז הניקוד בטבלה כולל רק את המנדטים.</p>
             </div>
         </section>
 
@@ -226,6 +294,12 @@
                     <div class="bg-gray-50 p-3 rounded-xl flex justify-between items-center font-bold text-sm">
                         <span>סך מנדטים אמת:</span>
                         <span id="admin-actual-total">0 / 120</span>
+                    </div>
+                    <div class="space-y-2 pt-3 border-t">
+                        <p class="text-xs text-gray-500">הקואליציה שהוקמה בפועל (10 נק׳ למי שפגע בה בדיוק). אפשר להשאיר ריק עד שהקואליציה ידועה:</p>
+                        <div id="admin-actual-coalition" class="grid grid-cols-2 gap-1.5 max-h-44 overflow-y-auto"></div>
+                        <p class="text-xs text-gray-500 pt-1">ראש הממשלה בפועל (10 נק׳):</p>
+                        <select id="admin-actual-pm" class="w-full p-2 border rounded-lg text-sm bg-white"></select>
                     </div>
                     <button onclick="calculateScores()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl transition">חשב מחדש ניקוד לכל השחקנים בענן</button>
                 </div>
@@ -361,6 +435,112 @@
             return `<span class="inline-flex items-center gap-2">${partyBadge(p, 'w-12 h-8', 'text-xs font-bold', 'rounded-md')}<span>${pm}</span></span>`;
         }
 
+        // ---------- Scoring ----------
+        const COALITION_BONUS = 10;
+        const PM_BONUS = 10;
+
+        // seats: 1 point per seat hit = min(guess, actual) per party; +10 exact coalition; +10 correct PM
+        function computeUserScore(userObj, actualMandates, actualCoalition, actualPM) {
+            let seats = 0;
+            partiesData.forEach(p => {
+                const guess = parseInt((userObj.mandates || {})[p.id]) || 0;
+                const actual = parseInt(actualMandates[p.id]) || 0;
+                seats += Math.min(guess, actual);
+            });
+            const userCo = Array.isArray(userObj.coalition) ? userObj.coalition : [];
+            const coalitionHit = actualCoalition.length > 0 &&
+                userCo.length === actualCoalition.length && actualCoalition.every(id => userCo.includes(id));
+            const pmHit = !!actualPM && userObj.pm === actualPM;
+            const coalition = coalitionHit ? COALITION_BONUS : 0;
+            const pm = pmHit ? PM_BONUS : 0;
+            return { seats, coalition, pm, total: seats + coalition + pm };
+        }
+
+        function saveAdminActuals(o) { try { localStorage.setItem('election_admin_actuals', JSON.stringify(o)); } catch (e) {} }
+        function loadAdminActuals() { try { return JSON.parse(localStorage.getItem('election_admin_actuals') || 'null'); } catch (e) { return null; } }
+
+        function buildAdminActualExtras() {
+            const cBox = document.getElementById('admin-actual-coalition');
+            if (cBox) {
+                cBox.innerHTML = partiesData.map(p => `<label class="flex items-center gap-2 text-xs bg-gray-50 p-2 rounded-lg cursor-pointer"><input type="checkbox" id="admin-coalition-${p.id}" class="w-4 h-4 accent-green-600"><span>${p.name}</span></label>`).join('');
+            }
+            const sel = document.getElementById('admin-actual-pm');
+            const src = document.getElementById('pm-select');
+            if (sel && src) {
+                sel.innerHTML = src.innerHTML;
+                if (sel.options[0]) sel.options[0].textContent = 'טרם נקבע (ללא בונוס עדיין)';
+            }
+        }
+
+        // The admin's last entered results are remembered on this device, so the coalition / PM can be added later
+        function prefillAdminActuals() {
+            const o = loadAdminActuals();
+            if (!o) return;
+            partiesData.forEach(p => {
+                const i = document.getElementById(`admin-actual-${p.id}`);
+                if (i && o.mandates && o.mandates[p.id] !== undefined) i.value = o.mandates[p.id];
+                const c = document.getElementById(`admin-coalition-${p.id}`);
+                if (c) c.checked = !!(o.coalition && o.coalition.includes(p.id));
+            });
+            const s = document.getElementById('admin-actual-pm');
+            if (s && o.pm) s.value = o.pm;
+            calcAdminActualTotal();
+        }
+
+        // Worked examples on the scoring page (invented numbers)
+        const SCORING_EXAMPLES = [
+            { id: 'likud', guess: 25, actual: 28, note: 'פגעת ב-25 מתוך 28 מנדטים – פספסת 3' },
+            { id: 'democrats', guess: 14, actual: 12, note: 'ניחשת יותר מדי – נספרים רק 12 המנדטים שהתקבלו' },
+            { id: 'shas', guess: 10, actual: 10, note: 'בול! כל המנדטים נספרים' },
+            { id: 'israel_beiteinu', guess: 6, actual: 9, note: 'פגעת ב-6 מתוך 9 מנדטים' }
+        ];
+
+        function renderScoringExamples() {
+            const box = document.getElementById('scoring-examples');
+            if (box) {
+                let total = 0, rows = '';
+                SCORING_EXAMPLES.forEach(e => {
+                    const p = partiesData.find(x => x.id === e.id);
+                    if (!p) return;
+                    const pts = Math.min(e.guess, e.actual);
+                    total += pts;
+                    rows += `
+                        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                            ${partyBadge(p, 'w-14 h-10', 'text-xs font-bold', 'rounded-lg')}
+                            <div class="flex-1 min-w-0">
+                                <div class="font-bold text-sm">${p.name}</div>
+                                <div class="text-xs text-gray-500">ניחשת <b>${e.guess}</b> · בפועל <b>${e.actual}</b></div>
+                                <div class="text-xs text-gray-400 leading-tight">${e.note}</div>
+                            </div>
+                            <div class="shrink-0 text-center bg-blue-600 text-white rounded-xl px-3 py-1.5">
+                                <div class="font-black text-lg leading-none">${pts}</div>
+                                <div class="text-[10px]">נק'</div>
+                            </div>
+                        </div>`;
+                });
+                box.innerHTML = rows + `<div class="flex justify-between items-center bg-blue-50 text-blue-800 rounded-xl p-3 text-sm font-bold"><span>סה״כ ל-${SCORING_EXAMPLES.length} המפלגות בדוגמה</span><span>${total} נקודות</span></div>`;
+            }
+
+            const cbox = document.getElementById('scoring-coalition-example');
+            if (cbox) {
+                const actual = ['likud', 'shas', 'otzma', 'religious_zionism', 'yahadut_hatorah'];
+                const chips = ids => ids.map(id => {
+                    const p = partiesData.find(x => x.id === id);
+                    return p ? `<span class="inline-flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-1.5 py-1 text-xs font-bold">${partyBadge(p, 'w-9 h-6', 'text-[10px] font-bold', 'rounded')}${p.name}</span>` : '';
+                }).join('');
+                const row = (title, ids, verdict, cls) => `
+                    <div class="p-3 rounded-xl border ${cls} space-y-2">
+                        <div class="flex justify-between items-center text-xs font-bold"><span>${title}</span><span>${verdict}</span></div>
+                        <div class="flex flex-wrap gap-1.5">${chips(ids)}</div>
+                    </div>`;
+                cbox.innerHTML =
+                    `<p class="text-xs text-gray-500 font-bold">דוגמה (להמחשה בלבד, לא תחזית):</p>` +
+                    row('הקואליציה שהוקמה בפועל', actual, '', 'bg-gray-50 border-gray-200') +
+                    row('ניחוש א׳ – אותה קואליציה', actual, '✔ +10 נקודות', 'bg-green-50 border-green-300 text-green-800') +
+                    row('ניחוש ב׳ – הוספת מפלגה אחת', actual.concat(['israel_beiteinu']), '✘ 0 נקודות', 'bg-red-50 border-red-200 text-red-800');
+            }
+        }
+
         // ---------- Betting deadline: election day 27.10.2026, 22:00 Israel time (UTC+2 on that date) ----------
         const BET_DEADLINE_MS = Date.parse('2026-10-27T22:00:00+02:00');
         const BET_DEADLINE_TEXT = 'ביום הבחירות (27.10.2026) בשעה 22:00';
@@ -455,6 +635,7 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             initPartiesUI();
+            renderScoringExamples();
             startBetCountdown();
             
             if (!currentUser || !currentPin) {
@@ -576,6 +757,7 @@
             });
             calcTotalMandates();
             renderCoalitionUI();
+            buildAdminActualExtras();
             applyBettingLock();
         }
 
@@ -749,17 +931,17 @@
         }
 
         function switchTab(tabName) {
-            ['predictions', 'crowd', 'leagues', 'leaderboard'].forEach(t => {
+            ['predictions', 'crowd', 'leagues', 'leaderboard', 'scoring'].forEach(t => {
                 let sec = document.getElementById(`tab-${t}`);
                 let btn = document.getElementById(`tab-btn-${t}`);
                 if(sec) sec.classList.add('hidden');
-                if(btn) btn.className = "py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm text-gray-600 hover:bg-gray-100 transition";
+                if(btn) btn.className = "py-2.5 px-1 sm:px-2 rounded-xl font-bold text-[11px] sm:text-sm leading-tight text-gray-600 hover:bg-gray-100 transition";
             });
             
             let targetSec = document.getElementById(`tab-${tabName}`);
             let targetBtn = document.getElementById(`tab-btn-${tabName}`);
             if(targetSec) targetSec.classList.remove('hidden');
-            if(targetBtn) targetBtn.className = "py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm bg-red-600 text-white transition shadow-sm";
+            if(targetBtn) targetBtn.className = "py-2.5 px-1 sm:px-2 rounded-xl font-bold text-[11px] sm:text-sm leading-tight bg-red-600 text-white transition shadow-sm";
 
             let floatingBar = document.getElementById('floating-counter-bar');
             if(floatingBar) {
@@ -1202,6 +1384,7 @@
         function openAdmin() {
             let modal = document.getElementById('admin-modal');
             if(modal) modal.classList.remove('hidden');
+            prefillAdminActuals();
         }
 
         function closeAdmin() {
@@ -1321,26 +1504,30 @@
                 return;
             }
 
+            // Optional: the real coalition and PM. Left empty = no bonus is awarded yet.
+            let actualCoalition = partiesData.filter(p => {
+                let c = document.getElementById(`admin-coalition-${p.id}`);
+                return c && c.checked;
+            }).map(p => p.id);
+            let pmSel = document.getElementById('admin-actual-pm');
+            let actualPM = pmSel ? pmSel.value : '';
+            saveAdminActuals({ mandates: actualMandates, coalition: actualCoalition, pm: actualPM });
+
             let batch = db.batch();
             Object.keys(allUsersData).forEach(username => {
                 let userObj = allUsersData[username];
                 if(userObj && userObj.mandates) {
-                    let diffSum = 0;
-                    partiesData.forEach(p => {
-                        let userVal = userObj.mandates[p.id] || 0;
-                        let actualVal = actualMandates[p.id] || 0;
-                        diffSum += Math.abs(userVal - actualVal);
-                    });
-                    let score = Math.max(0, 120 - Math.floor(diffSum / 2));
-                    userObj.score = score;
+                    let result = computeUserScore(userObj, actualMandates, actualCoalition, actualPM);
+                    userObj.score = result.total;
 
                     let docRef = db.collection('predictions').doc(username);
-                    batch.update(docRef, { score: score });
+                    batch.update(docRef, { score: result.total });
                 }
             });
 
             batch.commit().then(() => {
-                alert('תוצאות האמת עודכנו והניקוד חושב בהצלחה לכל השחקנים בענן! 🎖️');
+                let bonusNote = (actualCoalition.length || actualPM) ? '' : '\n(עדיין לא הוזנו קואליציה וראש ממשלה – הניקוד כולל רק מנדטים)';
+                alert('תוצאות האמת עודכנו והניקוד חושב בהצלחה לכל השחקנים בענן! 🎖️' + bonusNote);
                 closeAdmin();
                 renderLeaderboard();
             }).catch(err => {
