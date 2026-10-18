@@ -16,7 +16,7 @@
 <body class="bg-gray-50 text-gray-900 min-h-screen pb-12">
 
     <!-- Header -->
-    <header class="bg-red-600 text-white shadow-md sticky top-0 z-50">
+    <header class="bg-red-600 text-white shadow-md sticky top-0 z-40">
         <div class="max-w-4xl mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between items-center gap-2">
             <div class="flex items-center gap-3">
                 <span class="bg-white text-red-600 font-black text-xl px-2.5 py-1 rounded-lg shadow">26</span>
@@ -50,8 +50,8 @@
 
         <!-- 1. PREDICTIONS TAB -->
         <section id="tab-predictions" class="space-y-6">
-            <!-- Sticky Mandates Counter (Sticks right below nav) -->
-            <div class="sticky top-4 z-40 bg-white/95 backdrop-blur shadow-lg rounded-2xl p-4 border-2 border-red-500 flex justify-between items-center">
+            <!-- Sticky Mandates Counter (Sticks nicely below header with high z-index) -->
+            <div class="sticky top-2 z-30 bg-white/95 backdrop-blur shadow-lg rounded-2xl p-4 border-2 border-red-500 flex justify-between items-center">
                 <div>
                     <span class="text-xs text-gray-500 block font-bold">מעקב מנדטים חי</span>
                     <span class="text-xs text-gray-400">חובה לחלק בדיוק 120 מנדטים</span>
@@ -1022,7 +1022,7 @@
 
         function openAdmin() {
             let modal = document.getElementById('admin-modal');
-            if(modal) modal.classList.remove('hidden');
+            if(modal) modal.classList.add('hidden');
         }
 
         function closeAdmin() {
