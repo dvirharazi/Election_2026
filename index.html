@@ -13,7 +13,7 @@
         body { font-family: 'Heebo', sans-serif; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-900 min-h-screen pb-12">
+<body class="bg-gray-50 text-gray-900 min-h-screen pb-24">
 
     <!-- Header -->
     <header class="bg-red-600 text-white shadow-md sticky top-0 z-40">
@@ -50,16 +50,6 @@
 
         <!-- 1. PREDICTIONS TAB -->
         <section id="tab-predictions" class="space-y-6">
-            <!-- Sticky Mandates Counter (Sticks perfectly below header with safe top distance) -->
-            <div class="sticky top-20 z-30 bg-white/95 backdrop-blur shadow-lg rounded-2xl p-4 border-2 border-red-500 flex justify-between items-center">
-                <div>
-                    <span class="text-xs text-gray-500 block font-bold">מעקב מנדטים חי</span>
-                    <span class="text-xs text-gray-400">חובה לחלק בדיוק 120 מנדטים</span>
-                </div>
-                <div id="mandate-counter-box" class="px-4 py-2 rounded-xl font-black text-lg bg-blue-50 text-blue-700 transition">
-                    סך הכל: <span id="total-mandates">0</span> / 120
-                </div>
-            </div>
 
             <!-- Step A: Mandates Form -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
@@ -114,7 +104,7 @@
             </div>
 
             <!-- Save Predictions Button -->
-            <button onclick="saveUserPredictions()" class="w-full py-4 bg-red-600 hover:bg-red-700 text-white font-black rounded-2xl shadow-lg transition text-lg flex items-center justify-center gap-2">
+            <button onclick="saveUserPredictions()" class="w-full py-4 bg-red-600 hover:bg-red-700 text-white font-black rounded-2xl shadow-lg transition text-lg flex items-center justify-center gap-2 mb-12">
                 <span>שמור הימורים ועדכן בענן</span> 🚀
             </button>
         </section>
@@ -155,6 +145,17 @@
         </section>
 
     </main>
+
+    <!-- FLOATING BOTTOM MANDATES COUNTER BAR -->
+    <div id="floating-counter-bar" class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md shadow-2xl border-t-2 border-red-500 p-3 px-4 z-40 flex justify-between items-center max-w-4xl mx-auto sm:rounded-t-2xl">
+        <div>
+            <span class="text-xs text-gray-500 block font-bold">מעקב מנדטים חי</span>
+            <span class="text-[10px] text-gray-400">חובה 120 בדיוק</span>
+        </div>
+        <div id="mandate-counter-box" class="px-4 py-2 rounded-xl font-black text-base sm:text-lg bg-blue-50 text-blue-700 transition shadow-inner">
+            סך הכל: <span id="total-mandates">0</span> / 120
+        </div>
+    </div>
 
     <!-- VIEW USER PREDICTION MODAL -->
     <div id="user-pred-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
@@ -463,13 +464,13 @@
             if(!counterBox) return;
 
             if (total > 120) {
-                counterBox.className = "px-4 py-2 rounded-xl font-black text-lg bg-red-100 text-red-700 border border-red-300 transition animate-pulse";
-                counterBox.innerHTML = `סך הכל: <span class="text-red-700">${total}</span> / 120 (עברת את המכסה!)`;
+                counterBox.className = "px-4 py-2 rounded-xl font-black text-base sm:text-lg bg-red-100 text-red-700 transition animate-pulse";
+                counterBox.innerHTML = `סך הכל: <span class="text-red-700">${total}</span> / 120 (עברת!)`;
             } else if (total === 120) {
-                counterBox.className = "px-4 py-2 rounded-xl font-black text-lg bg-green-50 text-green-700 border border-green-200 transition";
+                counterBox.className = "px-4 py-2 rounded-xl font-black text-base sm:text-lg bg-green-50 text-green-700 transition";
                 counterBox.innerHTML = `סך הכל: <span class="text-green-700">120</span> / 120 (מושלם!)`;
             } else {
-                counterBox.className = "px-4 py-2 rounded-xl font-black text-lg bg-blue-50 text-blue-700 transition";
+                counterBox.className = "px-4 py-2 rounded-xl font-black text-base sm:text-lg bg-blue-50 text-blue-700 transition";
                 counterBox.innerHTML = `סך הכל: <span id="total-mandates">${total}</span> / 120`;
             }
             updateCoalitionTotal();
@@ -590,6 +591,15 @@
             let targetBtn = document.getElementById(`tab-btn-${tabName}`);
             if(targetSec) targetSec.classList.remove('hidden');
             if(targetBtn) targetBtn.className = "py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm bg-red-600 text-white transition shadow-sm";
+
+            let floatingBar = document.getElementById('floating-counter-bar');
+            if(floatingBar) {
+                if(tabName === 'predictions') {
+                    floatingBar.classList.remove('hidden');
+                } else {
+                    floatingBar.classList.add('hidden');
+                }
+            }
 
             if (tabName === 'crowd') renderCrowdDashboard();
             if (tabName === 'leagues') {
