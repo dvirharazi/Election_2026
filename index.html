@@ -279,8 +279,7 @@
             { id: 'miluimnikim', name: 'המילואימניקים', leader: 'תנועת המילואימניקים', symbol: 'מיל', color: 'bg-stone-700', badgeColor: 'bg-stone-100 text-stone-700' },
             { id: 'am_yisrael', name: 'עמך ישראל', leader: 'תנועה חברתית', symbol: 'עם', color: 'bg-teal-600', badgeColor: 'bg-teal-100 text-teal-700' },
             { id: 'raam', name: 'רע"מ', leader: 'מנסור עבאס', symbol: 'עם', color: 'bg-emerald-600', badgeColor: 'bg-emerald-100 text-emerald-600' },
-            { id: 'hadash_taal', name: 'חד"ש-תע"ל', leader: 'איימן עודה', symbol: 'ו', color: 'bg-red-700', badgeColor: 'bg-red-100 text-red-800' },
-            { id: 'balad', name: 'בל"ד', leader: 'סמי אבו שחאדה', symbol: 'ד', color: 'bg-purple-700', badgeColor: 'bg-purple-100 text-purple-700' }
+            { id: 'joint_list', name: 'הרשימה המשותפת', leader: 'חד"ש · תע"ל · בל"ד', symbol: 'מש', color: 'bg-red-700', badgeColor: 'bg-red-100 text-red-800' }
         ];
 
         // ---------- Party logos (files live in /images) ----------
@@ -298,10 +297,32 @@
             miluimnikim: 'המילואימניקים והכלכלית.png',
             am_yisrael: 'עמך ישראל.png',
             raam: 'רעם.png',
-            hadash_taal: 'הרשימה המשותפת.png',
-            balad: 'הרשימה המשותפת.png'
+            joint_list: 'הרשימה המשותפת.png'
             // noam: no logo yet - falls back to the letter badge
         };
+
+        // Older saved bets used separate hadash_taal / balad entries; they now run as one Joint List.
+        // Applied whenever bets are read, so nothing already saved is lost (the two numbers are added together).
+        const LEGACY_PARTY_IDS = { hadash_taal: 'joint_list', balad: 'joint_list' };
+        function migrateLegacyParties(d) {
+            if (!d) return d;
+            const out = Object.assign({}, d);
+            if (d.mandates) {
+                const m = Object.assign({}, d.mandates);
+                Object.keys(LEGACY_PARTY_IDS).forEach(oldId => {
+                    if (m[oldId] !== undefined) {
+                        const newId = LEGACY_PARTY_IDS[oldId];
+                        m[newId] = (parseInt(m[newId]) || 0) + (parseInt(m[oldId]) || 0);
+                        delete m[oldId];
+                    }
+                });
+                out.mandates = m;
+            }
+            if (Array.isArray(d.coalition)) {
+                out.coalition = d.coalition.map(id => LEGACY_PARTY_IDS[id] || id).filter((id, i, a) => a.indexOf(id) === i);
+            }
+            return out;
+        }
 
         function logoUrl(p) {
             const f = partyLogos[p.id];
@@ -436,18 +457,18 @@
             partiesData.forEach(p => {
                 if(container) {
                     container.innerHTML += `
-                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 gap-2">
-                            <div class="flex items-center gap-3">
-                                ${partyBadge(p, 'w-20 h-14', 'text-sm font-black', 'rounded-xl')}
-                                <div>
-                                    <span class="font-bold text-sm block">${p.name}</span>
-                                    <span class="text-xs text-gray-400">${p.leader}</span>
+                        <div class="flex flex-wrap items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 gap-x-2 gap-y-2">
+                            <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-[10rem]">
+                                ${partyBadge(p, 'w-14 h-10 sm:w-20 sm:h-14', 'text-sm font-black', 'rounded-xl')}
+                                <div class="min-w-0 flex-1">
+                                    <span class="font-bold text-sm block leading-tight break-words">${p.name}</span>
+                                    <span class="text-xs text-gray-400 block leading-tight break-words">${p.leader}</span>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <button onclick="updateMandate('${p.id}', -1)" class="w-8 h-8 bg-white border rounded-lg font-bold text-gray-600 shadow-sm">-</button>
-                                <input type="number" id="mandate-${p.id}" value="0" min="0" max="120" oninput="calcTotalMandates()" class="w-14 text-center font-bold p-1.5 bg-white border rounded-lg text-sm">
-                                <button onclick="updateMandate('${p.id}', 1)" class="w-8 h-8 bg-white border rounded-lg font-bold text-gray-600 shadow-sm">+</button>
+                            <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 mr-auto">
+                                <button onclick="updateMandate('${p.id}', -1)" class="w-8 h-8 shrink-0 bg-white border rounded-lg font-bold text-gray-600 shadow-sm">-</button>
+                                <input type="number" id="mandate-${p.id}" value="0" min="0" max="120" oninput="calcTotalMandates()" class="w-10 sm:w-14 text-center font-bold p-1.5 bg-white border rounded-lg text-sm">
+                                <button onclick="updateMandate('${p.id}', 1)" class="w-8 h-8 shrink-0 bg-white border rounded-lg font-bold text-gray-600 shadow-sm">+</button>
                             </div>
                         </div>
                     `;
@@ -457,7 +478,7 @@
                     coalitionContainer.innerHTML += `
                         <div id="coalition-card-${p.id}" onclick="toggleCoalition('${p.id}')" class="p-3 border border-gray-200 rounded-xl cursor-pointer text-center transition bg-white hover:border-red-500 flex flex-col items-center gap-1.5">
                             ${partyBadge(p, 'w-16 h-11', 'text-xs font-bold', 'rounded-lg')}
-                            <span class="font-bold text-xs block">${p.name}</span>
+                            <span class="font-bold text-xs block leading-tight break-words max-w-full">${p.name}</span>
                         </div>
                     `;
                 }
@@ -677,7 +698,7 @@
             db.collection('predictions').onSnapshot(snapshot => {
                 allUsersData = {};
                 snapshot.forEach(doc => {
-                    allUsersData[doc.id] = doc.data();
+                    allUsersData[doc.id] = migrateLegacyParties(doc.data());
                 });
                 loadUserExistingPredictions();
                 if(activeLeagueViewId) renderLeaguesUI();
@@ -779,7 +800,7 @@
                                 ${partyBadge(p, 'w-12 h-8', 'text-xs font-bold', 'rounded-md')}
                                 <span>${p.name}</span>
                             </div>
-                            <span>${mandates} מנדטים בממוצע</span>
+                            <span class="shrink-0 whitespace-nowrap">${mandates} מנדטים בממוצע</span>
                         </div>
                         <div class="w-full bg-gray-100 h-3 rounded-full overflow-hidden">
                             <div class="${p.color} h-full rounded-full transition-all duration-500" style="width: ${widthPercent}%"></div>
@@ -1035,7 +1056,7 @@
                                     ${partyBadge(p, 'w-12 h-8', 'text-xs font-bold', 'rounded-md')}
                                     <span class="font-bold">${p.name}</span>
                                 </div>
-                                <span class="font-black text-blue-600">${mandates} מנדטים</span>
+                                <span class="font-black text-blue-600 shrink-0 whitespace-nowrap">${mandates} מנדטים</span>
                             </div>
                         `;
                     }
