@@ -158,7 +158,6 @@
             </div>
         </section>
 
-
         <!-- 5. SCORING EXPLAINER TAB -->
         <section id="tab-scoring" class="hidden space-y-6">
 
@@ -363,7 +362,7 @@
             { id: 'religious_zionism', name: 'הציונות הדתית - זהות', leader: 'בצלאל סמוטריץ\'', symbol: 'טז', color: 'bg-blue-800', badgeColor: 'bg-blue-100 text-blue-800' },
             { id: 'noam', name: 'נעם', leader: 'אבי מעוז', symbol: 'נ', color: 'bg-emerald-700', badgeColor: 'bg-emerald-100 text-emerald-700' },
             { id: 'miluimnikim', name: 'המילואימניקים', leader: 'תנועת המילואימניקים', symbol: 'מיל', color: 'bg-stone-700', badgeColor: 'bg-stone-100 text-stone-700' },
-            { id: 'am_yisrael', name: 'עמך ישראל', leader: 'עובר וינטר', symbol: 'עם', color: 'bg-teal-600', badgeColor: 'bg-teal-100 text-teal-700' },
+            { id: 'am_yisrael', name: 'עמך ישראל', leader: 'עובר וינטר', symbol: 'עם', color: 'bg-teal-600', badgeColor: 'bg-teal-100 text-teal-600' },
             { id: 'raam', name: 'רע"מ', leader: 'מנסור עבאס', symbol: 'עם', color: 'bg-emerald-600', badgeColor: 'bg-emerald-100 text-emerald-600' },
             { id: 'joint_list', name: 'הרשימה המשותפת', leader: 'חד"ש · תע"ל · בל"ד', symbol: 'מש', color: 'bg-red-700', badgeColor: 'bg-red-100 text-red-800' }
         ];
@@ -384,11 +383,8 @@
             am_yisrael: 'עמך ישראל.png',
             raam: 'רעם.png',
             joint_list: 'הרשימה המשותפת.png'
-            // noam: no logo yet - falls back to the letter badge
         };
 
-        // Older saved bets used separate hadash_taal / balad entries; they now run as one Joint List.
-        // Applied whenever bets are read, so nothing already saved is lost (the two numbers are added together).
         const LEGACY_PARTY_IDS = { hadash_taal: 'joint_list', balad: 'joint_list' };
         function migrateLegacyParties(d) {
             if (!d) return d;
@@ -421,14 +417,12 @@
             return `<div class="${sizeClass} ${roundClass} ${p.badgeColor} ${textClass} flex items-center justify-center shrink-0">${p.symbol}</div>`;
         }
 
-        // Logo badge for a party (falls back to the old letter badge when there is no logo or it fails to load)
         function partyBadge(p, sizeClass, textClass, roundClass) {
             const url = logoUrl(p);
             if (!url) return partyFallback(p.id, sizeClass, textClass, roundClass);
             return `<div class="${sizeClass} ${roundClass} bg-white border border-gray-100 shadow-sm flex items-center justify-center overflow-hidden p-0.5 shrink-0"><img src="${url}" alt="${p.name}" title="${p.name}" loading="lazy" class="max-w-full max-h-full object-contain" onerror="this.parentElement.outerHTML=partyFallback('${p.id}','${sizeClass}','${textClass}','${roundClass}')"></div>`;
         }
 
-        // Prime-minister cell: logo of the PM's party + the name. Non-party choices (rotation, new election) stay text-only.
         function pmCell(pm) {
             if (!pm) return 'לא נבחר';
             const p = partiesData.find(x => x.leader === pm);
@@ -436,11 +430,9 @@
             return `<span class="inline-flex items-center gap-2">${partyBadge(p, 'w-12 h-8', 'text-xs font-bold', 'rounded-md')}<span>${pm}</span></span>`;
         }
 
-        // ---------- Scoring ----------
         const COALITION_BONUS = 10;
         const PM_BONUS = 10;
 
-        // seats: 1 point per seat hit = min(guess, actual) per party; +10 exact coalition; +10 correct PM
         function computeUserScore(userObj, actualMandates, actualCoalition, actualPM) {
             let seats = 0;
             partiesData.forEach(p => {
@@ -473,22 +465,20 @@
             }
         }
 
-        // The admin's last entered results are remembered on this device, so the coalition / PM can be added later
         function prefillAdminActuals() {
             const o = loadAdminActuals();
             if (!o) return;
             partiesData.forEach(p => {
-                const i = document.getElementById(`admin-actual-${p.id}`);
+                let i = document.getElementById(`admin-actual-${p.id}`);
                 if (i && o.mandates && o.mandates[p.id] !== undefined) i.value = o.mandates[p.id];
-                const c = document.getElementById(`admin-coalition-${p.id}`);
+                let c = document.getElementById(`admin-coalition-${p.id}`);
                 if (c) c.checked = !!(o.coalition && o.coalition.includes(p.id));
             });
-            const s = document.getElementById('admin-actual-pm');
+            let s = document.getElementById('admin-actual-pm');
             if (s && o.pm) s.value = o.pm;
             calcAdminActualTotal();
         }
 
-        // Worked examples on the scoring page (invented numbers)
         const SCORING_EXAMPLES = [
             { id: 'likud', guess: 25, actual: 28, note: 'פגעת ב-25 מתוך 28 מנדטים – פספסת 3' },
             { id: 'democrats', guess: 14, actual: 12, note: 'ניחשת יותר מדי – נספרים רק 12 המנדטים שהתקבלו' },
@@ -542,22 +532,21 @@
             }
         }
 
-        // ---------- Betting deadline: election day 27.10.2026, 22:00 Israel time (UTC+2 on that date) ----------
         const BET_DEADLINE_MS = Date.parse('2026-10-27T22:00:00+02:00');
         const BET_DEADLINE_TEXT = 'ביום הבחירות (27.10.2026) בשעה 22:00';
-        let serverOffsetMs = 0;   // server time minus device time, so a wrong phone clock can't extend betting
+        let serverOffsetMs = 0;
 
         async function syncServerTime() {
             try {
-                const t0 = Date.now();
-                const res = await fetch(location.pathname || '/', { method: 'HEAD', cache: 'no-store' });
-                const t1 = Date.now();
-                const header = res.headers.get('date');
+                let t0 = Date.now();
+                let res = await fetch(location.pathname || '/', { method: 'HEAD', cache: 'no-store' });
+                let t1 = Date.now();
+                let header = res.headers.get('date');
                 if (header) {
-                    const serverMs = Date.parse(header);
+                    let serverMs = Date.parse(header);
                     if (!isNaN(serverMs)) serverOffsetMs = serverMs + (t1 - t0) / 2 - t1;
                 }
-            } catch (e) { /* offline or opened as a local file - fall back to the device clock */ }
+            } catch (e) {}
         }
 
         function nowMs() { return Date.now() + serverOffsetMs; }
@@ -565,25 +554,25 @@
         function betClosedAlert() { alert('ההימורים נסגרו ' + BET_DEADLINE_TEXT + '. לא ניתן עוד לשנות או לשמור הימורים.'); }
 
         function applyBettingLock() {
-            const closed = isBettingClosed();
-            const notice = document.getElementById('betting-closed-notice');
+            let closed = isBettingClosed();
+            let notice = document.getElementById('betting-closed-notice');
             if (notice) notice.classList.toggle('hidden', !closed);
             if (!closed) return;
-            const sec = document.getElementById('tab-predictions');
+            let sec = document.getElementById('tab-predictions');
             if (!sec) return;
             sec.querySelectorAll('input, select, button').forEach(el => { el.disabled = true; });
             sec.querySelectorAll('[id^="coalition-card-"]').forEach(c => c.classList.add('pointer-events-none'));
             sec.querySelectorAll('#parties-list, #coalition-picker').forEach(c => c.classList.add('opacity-60'));
-            const saveBtn = sec.querySelector('button[onclick="saveUserPredictions()"]');
+            let saveBtn = sec.querySelector('button[onclick="saveUserPredictions()"]');
             if (saveBtn) saveBtn.innerHTML = '<span>🔒 ההימורים נסגרו</span>';
         }
 
         function renderBetCountdown() {
-            const bar = document.getElementById('bet-countdown-bar');
-            const label = document.getElementById('bet-countdown-label');
-            const time = document.getElementById('bet-countdown-time');
+            let bar = document.getElementById('bet-countdown-bar');
+            let label = document.getElementById('bet-countdown-label');
+            let time = document.getElementById('bet-countdown-time');
             if (!bar || !label || !time) return;
-            const left = BET_DEADLINE_MS - nowMs();
+            let left = BET_DEADLINE_MS - nowMs();
             if (left <= 0) {
                 bar.className = 'bg-gray-800 text-white';
                 label.textContent = '🔒 ההימורים נסגרו';
@@ -593,9 +582,9 @@
                 return;
             }
             time.classList.remove('hidden');
-            const s = Math.floor(left / 1000);
-            const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
-            const pad = n => String(n).padStart(2, '0');
+            let s = Math.floor(left / 1000);
+            let d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+            let pad = n => String(n).padStart(2, '0');
             time.innerHTML = (d > 0 ? `<span>${d} ${d === 1 ? 'יום' : 'ימים'}</span>` : '') +
                 `<span dir="ltr" class="tabular-nums">${pad(h)}:${pad(m)}:${pad(sec)}</span>`;
             label.textContent = '⏳ ההימורים נסגרים בעוד';
@@ -609,12 +598,11 @@
             setInterval(syncServerTime, 10 * 60 * 1000);
         }
 
-        // Logo preview under the PM dropdown in the bet form
         function updatePmPreview() {
-            const sel = document.getElementById('pm-select');
-            const box = document.getElementById('pm-logo-preview');
+            let sel = document.getElementById('pm-select');
+            let box = document.getElementById('pm-logo-preview');
             if (!sel || !box) return;
-            const p = partiesData.find(x => x.leader === sel.value);
+            let p = partiesData.find(x => x.leader === sel.value);
             if (p && logoUrl(p)) {
                 box.innerHTML = partyBadge(p, 'w-20 h-14', 'text-base font-black', 'rounded-xl') + `<span class="font-bold text-sm">${p.name}</span>`;
                 box.classList.remove('hidden');
@@ -841,7 +829,6 @@
             calcTotalMandates();
         }
 
-        // A party gets either 0 seats (below the threshold) or at least MIN_MANDATES. 1-3 seats turns the box red and blocks saving.
         const MIN_MANDATES = 4;
         const touchedParties = new Set();
         let showAllMinErrors = false;
@@ -851,7 +838,7 @@
                 let input = document.getElementById(`mandate-${p.id}`);
                 if (!input) return;
                 let val = parseInt(input.value) || 0;
-                let bad = val > 0 && val < MIN_MANDATES;   // 0 is allowed (party below the threshold)
+                let bad = val > 0 && val < MIN_MANDATES;
                 input.classList.toggle('bg-red-100', bad);
                 input.classList.toggle('border-red-500', bad);
                 input.classList.toggle('text-red-700', bad);
@@ -947,7 +934,7 @@
         }
 
         async function saveUserPredictions() {
-            await syncServerTime();   // re-check against server time right before saving
+            await syncServerTime();
             if (isBettingClosed()) { applyBettingLock(); betClosedAlert(); return; }
             let total = 0;
             partiesData.forEach(p => {
@@ -1090,6 +1077,9 @@
             }
         }
 
+        // ==========================================
+        // CROWD DASHBOARD WITH NEW STATS (1, 2, 4, 5)
+        // ==========================================
         function renderCrowdDashboard() {
             let container = document.getElementById('crowd-content');
             if(!container) return;
@@ -1100,6 +1090,7 @@
                 return;
             }
 
+            // 1. Mandates normalization calculation
             let rawAverages = {};
             partiesData.forEach(p => rawAverages[p.id] = 0);
 
@@ -1134,13 +1125,150 @@
                 }
             }
 
-            let html = `<p class="text-xs text-gray-500">מבוסס על ${usersCount} משתתפים פעילים באפליקציה</p><div class="space-y-3">`;
-            
+            // --- FEATURE 1: Blocs Calculation ---
+            const blocMapping = {
+                right: { name: 'גוש הימין והחרדים', parties: ['likud', 'shas', 'otzma', 'yahadut_hatorah', 'religious_zionism', 'noam', 'am_yisrael'] },
+                center_left: { name: 'גוש המרכז-שמאל', parties: ['yeshar', 'beyachad', 'democrats', 'israel_beiteinu', 'miluimnikim'] },
+                arab: { name: 'המפלגות הערביות', parties: ['raam', 'joint_list'] }
+            };
+            let blocTotals = { right: 0, center_left: 0, arab: 0 };
+            Object.keys(blocMapping).forEach(bKey => {
+                blocMapping[bKey].parties.forEach(pId => {
+                    blocTotals[bKey] += (normalizedMandates[pId] || 0);
+                });
+            });
+
+            // --- FEATURE 2: Most Popular Coalition ---
+            let coalitionCounts = {};
+            Object.values(allUsersData).forEach(u => {
+                if (u.coalition && Array.isArray(u.coalition) && u.coalition.length > 0) {
+                    let sortedKey = [...u.coalition].sort().join(',');
+                    coalitionCounts[sortedKey] = (coalitionCounts[sortedKey] || 0) + 1;
+                }
+            });
+            let topCoalitionKey = null;
+            let maxCoalitionCount = -1;
+            Object.keys(coalitionCounts).forEach(key => {
+                if (coalitionCounts[key] > maxCoalitionCount) {
+                    maxCoalitionCount = coalitionCounts[key];
+                    topCoalitionKey = key;
+                }
+            });
+            let topCoalitionIds = topCoalitionKey ? topCoalitionKey.split(',') : [];
+            let topCoalitionMandates = topCoalitionIds.reduce((sum, id) => sum + (normalizedMandates[id] || 0), 0);
+
+            // --- FEATURE 4: PM Breakdown ---
+            let pmCounts = {};
+            let totalPmVotes = 0;
+            Object.values(allUsersData).forEach(u => {
+                if (u.pm) {
+                    pmCounts[u.pm] = (pmCounts[u.pm] || 0) + 1;
+                    totalPmVotes++;
+                }
+            });
+            let sortedPm = Object.keys(pmCounts).map(pm => ({ pm, count: pmCounts[pm], pct: totalPmVotes ? Math.round((pmCounts[pm] / totalPmVotes) * 100) : 0 })).sort((a, b) => b.count - a.count);
+
+            // --- FEATURE 5: Most Controversial Party (Standard Deviation) ---
+            let partyStats = partiesData.map(p => {
+                let guesses = Object.values(allUsersData).map(u => (u.mandates && u.mandates[p.id] !== undefined) ? (parseInt(u.mandates[p.id]) || 0) : 0);
+                let mean = guesses.reduce((a, b) => a + b, 0) / (guesses.length || 1);
+                let variance = guesses.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / (guesses.length || 1);
+                let stdDev = Math.sqrt(variance);
+                return { p, stdDev, mean };
+            });
+            partyStats.sort((a, b) => b.stdDev - a.stdDev);
+            let mostControversial = partyStats[0];
+
+            // --- RENDER HTML ---
+            let html = `<p class="text-xs text-gray-500 mb-2">מבוסס על ${usersCount} משתתפים פעילים באפליקציה</p><div class="space-y-6">`;
+
+            // 1. Blocs Card
+            html += `
+                <div class="bg-gradient-to-br from-gray-900 to-gray-800 text-white p-5 rounded-2xl shadow-md space-y-4">
+                    <h3 class="font-bold text-sm sm:text-base flex items-center gap-2">🏛️ מדד הגושים (ממוצע חוכמת ההמונים)</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div class="bg-white/10 p-3 rounded-xl text-center">
+                            <div class="text-xs text-gray-300">${blocMapping.right.name}</div>
+                            <div class="text-2xl font-black text-blue-400 mt-1">${blocTotals.right} <span class="text-xs font-normal">מנדטים</span></div>
+                            <div class="text-[10px] text-gray-400 mt-0.5">${blocTotals.right >= 61 ? '🎯 עובר את קו 61' : 'חסרים ' + (61 - blocTotals.right) + ' ל-61'}</div>
+                        </div>
+                        <div class="bg-white/10 p-3 rounded-xl text-center">
+                            <div class="text-xs text-gray-300">${blocMapping.center_left.name}</div>
+                            <div class="text-2xl font-black text-red-400 mt-1">${blocTotals.center_left} <span class="text-xs font-normal">מנדטים</span></div>
+                            <div class="text-[10px] text-gray-400 mt-0.5">${blocTotals.center_left >= 61 ? '🎯 עובר את קו 61' : 'חסרים ' + (61 - blocTotals.center_left) + ' ל-61'}</div>
+                        </div>
+                        <div class="bg-white/10 p-3 rounded-xl text-center">
+                            <div class="text-xs text-gray-300">${blocMapping.arab.name}</div>
+                            <div class="text-2xl font-black text-emerald-400 mt-1">${blocTotals.arab} <span class="text-xs font-normal">מנדטים</span></div>
+                            <div class="text-[10px] text-gray-400 mt-0.5">מפלגות ערביות</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 2. Popular Coalition Card
+            if (topCoalitionIds.length > 0) {
+                let coalitionChips = topCoalitionIds.map(id => {
+                    let p = partiesData.find(x => x.id === id);
+                    return p ? `<span class="inline-flex items-center gap-1.5 bg-white border border-gray-200 text-gray-900 rounded-lg px-2 py-1 text-xs font-bold">${partyBadge(p, 'w-10 h-7', 'text-[10px] font-bold', 'rounded')}${p.name}</span>` : '';
+                }).join('');
+
+                html += `
+                    <div class="bg-green-50 border border-green-200 p-5 rounded-2xl space-y-3">
+                        <div class="flex justify-between items-center flex-wrap gap-2">
+                            <h3 class="font-bold text-sm text-green-900 flex items-center gap-2">🤝 קואליציית ברירת המחדל של ההמונים</h3>
+                            <span class="bg-green-200 text-green-800 text-xs font-black px-2.5 py-1 rounded-lg">${topCoalitionMandates} מנדטים סה״כ</span>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5">${coalitionChips}</div>
+                        <p class="text-xs text-green-700">${topCoalitionMandates >= 61 ? '✅ קואליציה זו מגיעה לרוב קואליציוני ויציב לפי תחזית ההמונים!' : '⚠️ קואליציה זו אינה מגיעה לרוב של 61 מנדטים.'}</p>
+                    </div>
+                `;
+            }
+
+            // 4. PM Breakdown Card
+            if (sortedPm.length > 0) {
+                let pmRows = sortedPm.map(item => `
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-center text-xs font-bold">
+                            <span>${pmCell(item.pm)}</span>
+                            <span>${item.count} משתתפים (${item.pct}%)</span>
+                        </div>
+                        <div class="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
+                            <div class="bg-red-600 h-full rounded-full transition-all duration-500" style="width: ${item.pct}%"></div>
+                        </div>
+                    </div>
+                `).join('');
+
+                html += `
+                    <div class="bg-white border border-gray-100 p-5 rounded-2xl shadow-sm space-y-3">
+                        <h3 class="font-bold text-sm text-gray-900 flex items-center gap-2">👑 מיהו ראש הממשלה המועדף על המשתמשים?</h3>
+                        <div class="space-y-3 pt-2">${pmRows}</div>
+                    </div>
+                `;
+            }
+
+            // 5. Controversial Party Card
+            if (mostControversial) {
+                let cp = mostControversial.p;
+                html += `
+                    <div class="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-center gap-4">
+                        ${partyBadge(cp, 'w-16 h-12', 'text-xs font-bold', 'rounded-xl')}
+                        <div class="flex-1 min-w-0">
+                            <div class="text-xs text-amber-800 font-bold">⚡ המפלגה הכי שנויה במחלוקת (סטיית תקן גבוהה ביותר)</div>
+                            <div class="font-black text-base text-gray-900">${cp.name}</div>
+                            <div class="text-xs text-gray-600">החברים חלוקים מאוד לגביה (ממוצע: ${Math.round(mostControversial.mean)} מנדטים)</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Mandates Average List
+            html += `<div class="space-y-3 pt-2"><h3 class="font-bold text-sm text-gray-900">📊 ממוצע מנדטים מנורמל לכל מפלגה</h3><div class="space-y-3">`;
             partiesData.forEach(p => {
                 let mandates = normalizedMandates[p.id];
                 let widthPercent = (mandates / 40) * 100;
                 html += `
-                    <div class="space-y-1">
+                    <div class="space-y-1 bg-gray-50 p-3 rounded-xl border border-gray-100">
                         <div class="flex justify-between items-center text-sm font-bold">
                             <div class="flex items-center gap-2">
                                 ${partyBadge(p, 'w-12 h-8', 'text-xs font-bold', 'rounded-md')}
@@ -1148,13 +1276,13 @@
                             </div>
                             <span class="shrink-0 whitespace-nowrap">${mandates} מנדטים בממוצע</span>
                         </div>
-                        <div class="w-full bg-gray-100 h-3 rounded-full overflow-hidden">
+                        <div class="w-full bg-gray-200 h-2.5 rounded-full overflow-hidden">
                             <div class="${p.color} h-full rounded-full transition-all duration-500" style="width: ${widthPercent}%"></div>
                         </div>
                     </div>
                 `;
             });
-            html += `</div>`;
+            html += `</div></div></div>`;
             container.innerHTML = html;
         }
 
@@ -1583,7 +1711,6 @@
                 return;
             }
 
-            // Optional: the real coalition and PM. Left empty = no bonus is awarded yet.
             let actualCoalition = partiesData.filter(p => {
                 let c = document.getElementById(`admin-coalition-${p.id}`);
                 return c && c.checked;
