@@ -110,6 +110,7 @@
                         <option value="איתמר בן גביר">איתמר בן גביר (עוצמה יהודית)</option>
                         <option value="אביגדור ליברמן">אביגדור ליברמן (ישראל ביתנו)</option>
                         <option value="בצלאל סמוטריץ'">בצלאל סמוטריץ' (הציונות הדתית)</option>
+                        <option value="מוטי ליטנר">מוטי ליטנר (הציבור החרדי)</option>
                         <option value="סבב בחירות נוסף">סבב בחירות נוסף (בחירות חוזרות)</option>
                         <option value="רוטציה / ממשלת מעבר">רוטציה / ממשלת מעבר / ללא הכרעה</option>
                     </select>
@@ -360,6 +361,7 @@
             { id: 'israel_beiteinu', name: 'ישראל ביתנו', leader: 'אביגדור ליברמן', symbol: 'ל', color: 'bg-slate-700', badgeColor: 'bg-slate-100 text-slate-700' },
             { id: 'yahadut_hatorah', name: 'יהדות התורה', leader: 'אגודת ישראל - דגל התורה', symbol: 'ג', color: 'bg-sky-700', badgeColor: 'bg-sky-100 text-sky-700' },
             { id: 'religious_zionism', name: 'הציונות הדתית - זהות', leader: 'בצלאל סמוטריץ\'', symbol: 'טז', color: 'bg-blue-800', badgeColor: 'bg-blue-100 text-blue-800' },
+            { id: 'haredi_public', name: 'הציבור החרדי', leader: 'מוטי ליטנר', symbol: 'זך', color: 'bg-blue-900', badgeColor: 'bg-blue-100 text-blue-900' },
             { id: 'noam', name: 'נעם', leader: 'אבי מעוז', symbol: 'נ', color: 'bg-emerald-700', badgeColor: 'bg-emerald-100 text-emerald-700' },
             { id: 'miluimnikim', name: 'המילואימניקים', leader: 'תנועת המילואימניקים', symbol: 'מיל', color: 'bg-stone-700', badgeColor: 'bg-stone-100 text-stone-700' },
             { id: 'am_yisrael', name: 'עמך ישראל', leader: 'עובר וינטר', symbol: 'עם', color: 'bg-teal-600', badgeColor: 'bg-teal-100 text-teal-600' },
@@ -1127,7 +1129,7 @@
 
             // --- FEATURE 1: Blocs Calculation ---
             const blocMapping = {
-                right: { name: 'גוש הימין והחרדים', parties: ['likud', 'shas', 'otzma', 'yahadut_hatorah', 'religious_zionism', 'noam', 'am_yisrael'] },
+                right: { name: 'גוש הימין והחרדים', parties: ['likud', 'shas', 'otzma', 'yahadut_hatorah', 'religious_zionism', 'haredi_public', 'noam', 'am_yisrael'] },
                 center_left: { name: 'גוש המרכז-שמאל', parties: ['yeshar', 'beyachad', 'democrats', 'israel_beiteinu', 'miluimnikim'] },
                 arab: { name: 'המפלגות הערביות', parties: ['raam', 'joint_list'] }
             };
